@@ -1,9 +1,6 @@
 #!/usr/local/bin/python3
 #!/usr/bin/python3
 #
-# Copyright (c) 2017-2018, Fabian Affolter <fabian@affolter-engineering.ch>
-# Released under the ASL 2.0 license. See LICENSE.md file for details.
-#
 #
 #
 #
@@ -18,79 +15,111 @@ import asyncws
 import logging
 import yaml
 
-import os
-import sys
+import os, sys, signal
+
 
 logger = logging.getLogger(__name__)
 
-async def main():
-    """Simple WebSocket client for Home Assistant."""
+class HaEvents:
 
-    ymlfile = open("config.yml", 'r')
-    cfg = yaml.safe_load(ymlfile)
-    haConfig = cfg['homeassistant']
-    websocketUrl = haConfig['websocket_url']
-    haAccessToken = haConfig['access_token']
+    def __init__(self):
+        """Simple WebSocket client for Home Assistant."""
+
+        ymlfile = open("config.yml", 'r')
+        cfg = yaml.safe_load(ymlfile)
+        haConfig = cfg['homeassistant']
+        self.websocketUrl = haConfig['websocket_url']
+        self.haAccessToken = haConfig['access_token']
+        
+
+        FORMAT = '%(asctime)-15s %(threadName)-10s %(levelname)6s %(message)s'
+        logging.basicConfig(level=logging.NOTSET, format=FORMAT)
+
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
+
+
+    async def startup(self):
+        
+        websocket = await asyncws.connect(self.websocketUrl)
+
+        await websocket.send(json.dumps(
+            {'type': 'auth',
+            'access_token': self.haAccessToken}
+        ))
+
+        logger.info("get_states called")
+        await websocket.send(json.dumps(
+            {"id": 1, "type": "get_states"}
+        ))
     
+        # Format
+        # {"id": 1, "type": "result", "success": true, "result": [{"entity_id": "person.kkellner", "state": "home", "attributes": {"editable": true, "id": "5f3d180e25bd4e098dc4a5510221746f", "source": "device_tracker.kurtphone", "user_id": "4447436a5424483bb91d1d4fd28e2a3f", "friendly_name": "kkellner", "last_changed": "2020-11-23T18:12:14.287334+00:00", "last_updated": "2020-11-23T18:12:26.184702+00:00", "context": {"id": "597d90a0be7b9e6bcd51058f45607969", "parent_id": null, "user_id": null}}, {"entity_id": "person.jkellner", "state": "home", "attributes": {"editable": true, "id": "d707594627274c208bd99a265203dc0c",
 
-    FORMAT = '%(asctime)-15s %(threadName)-10s %(levelname)6s %(message)s'
-    logging.basicConfig(level=logging.NOTSET, format=FORMAT)
+        while True:
+            message = await websocket.recv()
+            if message is None:
+                break
+            #print (message)
+            json_msg = json.loads(message)
+            if ('id' in json_msg and json_msg['id'] == 1):
+                logger.info("Got all states")
+                json_msg
+                break
 
-    websocket = await asyncws.connect(websocketUrl)
+        logger.info("get_states complete")
 
-    await websocket.send(json.dumps(
-        {'type': 'auth',
-         'access_token': haAccessToken}
-    ))
+        await websocket.send(json.dumps(
+            {'id': 2, 'type': 'subscribe_events', 'event_type': 'state_changed'}
+        ))
+        eventCount = 0
+        while True:
+            message = await websocket.recv()
+            if message is None:
+                break
+            #print (message)
+            eventCount += 1
+            json_msg = json.loads(message)
+            if (json_msg['type'] == 'event' and json_msg['event']['event_type'] == 'state_changed'):
+                entityId = json_msg['event']['data']['entity_id']
+                newState = json_msg['event']['data']['new_state']['state']
+                if ( entityId == 'sensor.wind_gust'):
+                    print("\nentity_id:", entityId)
+                    print("   new state:", json_msg['event']['data']['new_state']['state'])
+                else:
+                    print(f"\rEvents: {eventCount}", end='', flush=True)
 
+    def signal_handler(self, signal, frame):
+        logger.info('Shutdown...')
+        # if self.server is not None:
+        #     self.server.shutdown()
+        # if self.light is not None:
+        #     self.light.shutdown()
+        # if self.pubsub is not None:
+        #     self.pubsub.shutdown()
+        #sys.tracebacklimit = 0
+        sys.exit(0)
 
-    logger.info("get_states called")
-    await websocket.send(json.dumps(
-        {"id": 1, "type": "get_states"}
-    ))
-   
-    # Format
-    # {"id": 1, "type": "result", "success": true, "result": [{"entity_id": "person.kkellner", "state": "home", "attributes": {"editable": true, "id": "5f3d180e25bd4e098dc4a5510221746f", "source": "device_tracker.kurtphone", "user_id": "4447436a5424483bb91d1d4fd28e2a3f", "friendly_name": "kkellner", "last_changed": "2020-11-23T18:12:14.287334+00:00", "last_updated": "2020-11-23T18:12:26.184702+00:00", "context": {"id": "597d90a0be7b9e6bcd51058f45607969", "parent_id": null, "user_id": null}}, {"entity_id": "person.jkellner", "state": "home", "attributes": {"editable": true, "id": "d707594627274c208bd99a265203dc0c",
+def main():
+    """
+    The main function
+    :return:
+    """
+    if os.geteuid() != 0:
+        exit("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
 
-    while True:
-        message = await websocket.recv()
-        if message is None:
-            break
-        #print (message)
-        json_msg = json.loads(message)
-        if ('id' in json_msg and json_msg['id'] == 1):
-            logger.info("Got all states")
-            json_msg
-            break
+  
+    events = HaEvents()
 
-    logger.info("get_states complete")
-
-
-
-    await websocket.send(json.dumps(
-        {'id': 2, 'type': 'subscribe_events', 'event_type': 'state_changed'}
-    ))
-    eventCount = 0
-    while True:
-        message = await websocket.recv()
-        if message is None:
-            break
-        #print (message)
-        eventCount += 1
-        json_msg = json.loads(message)
-        if (json_msg['type'] == 'event' and json_msg['event']['event_type'] == 'state_changed'):
-            entityId = json_msg['event']['data']['entity_id']
-            newState = json_msg['event']['data']['new_state']['state']
-            if ( entityId == 'sensor.wind_gust'):
-                print("\nentity_id:", entityId)
-                print("   new state:", json_msg['event']['data']['new_state']['state'])
-            else:
-                print(f"\rEvents: {eventCount}", end='', flush=True)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(events.startup())
+    loop.close()
 
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == '__main__':
+    main()
+
+
 
 # All states example reponse:
 # {

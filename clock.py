@@ -1,5 +1,3 @@
-#My very first Python program using Pygame library displaying real-time clock
-
 # Docs: https://www.pygame.org/docs/ref/display.html
 
 # AnyBeam Pico Mini Portable Pocket

@@ -24,12 +24,18 @@
 
 import time,pygame
 import os
+import threading
 from colorsys import rgb_to_hls, hls_to_rgb
 
 class HdmiDisplay:
 
-    def __init__(self):
+    def __init__(self, ceiling_display):
         #initialize pygame library
+
+        self.ceiling_display = ceiling_display
+
+    def startup(self):
+
         pygame.init()
         pygame.mouse.set_visible(False)
 
@@ -53,6 +59,12 @@ class HdmiDisplay:
         # Clear screen
 
         print(pygame.display.Info())
+
+        self.updateDisplayLoop()
+
+        # thread1 = threading.Thread(target=(lambda: self.updateDisplayLoop() ))
+        # thread1.setDaemon(False)
+        # thread1.start()
 
 
     def updateDisplayLoop(self):
@@ -83,13 +95,30 @@ class HdmiDisplay:
             self.updateOutsideTemperature(80, 300, outsideTemperature)
             self.updateWind(370, 300, windSpeed, windGust)
 
+            self.updateDebug(80, 400, "Events", "{:d}".format(self.ceiling_display.ha_events.eventCount))
+
             pygame.display.update()
 
             # Update interval (fps)
             self.clock.tick(2)
 
+    def updateDebug(self, displayX: int, displayY: int, label:str, debugText: str):
+        # Temperature
+        displayXValueOffset = 0
+        
+        labelText=self.fontSmall.render(label+": ", True, colorRedLabel, (0,0,0))
+        labelText_width = labelText.get_width()
+        self.screen.blit(labelText, (displayX, displayY))
+
+        formattedValue = debugText
+        valueText=self.fontSmall.render(formattedValue, True, colorRed, (0,0,0))
+        valueText_width = valueText.get_width()
+        valueText_height = valueText.get_height()
+        self.screen.blit(valueText, (displayX + labelText_width+ displayXValueOffset, displayY))
+    
+
  
-    def updateTime(self, timeDisplayX: int, timeDisplayY: int):
+    def updateTime(self, displayX: int, displayY: int):
 
 
         epochNow = time.time()
@@ -98,13 +127,11 @@ class HdmiDisplay:
         #print (epochNow, halfSecond)
 
         if halfSecond:
-            theTime=time.strftime("%H:%M", now)
+            theTime=time.strftime("%I:%M", now)
         else:
-            theTime=time.strftime("%H~%M", now)
+            theTime=time.strftime("%I~%M", now)
 
         ampm=time.strftime("%p", now)
-
-        theTime2 = "18:59"
 
         if theTime.startswith('0'):
             theTime = theTime.replace('0', ' ', 1)
@@ -116,13 +143,13 @@ class HdmiDisplay:
         timeText=self.fontValue.render(str(theTime), True, colorRed, (0,0,0))
         timeText_width = timeText.get_width()
         timeText_height = timeText.get_height()
-        self.screen.blit(timeText, (timeDisplayX,timeDisplayY))
+        self.screen.blit(timeText, (displayX,displayY))
 
         # AM/PM 
         ampmText=self.fontSmall.render(str(ampm), True, colorRed, (0,0,0))
         ampmText_width = ampmText.get_width()
         ampmText_height = ampmText.get_height()
-        self.screen.blit(ampmText, (timeDisplayX+timeText_width-ampmText_width, timeDisplayY-ampmText_height+5))
+        self.screen.blit(ampmText, (displayX+timeText_width-ampmText_width, displayY-ampmText_height+5))
 
     def updateOutsideTemperature(self, displayX: int, displayY: int, temperature: float):
         # Temperature
@@ -222,7 +249,7 @@ def main():
 
 
     display = HdmiDisplay()
-    display.updateDisplayLoop()
+    display.starup()
 
     print("Existing app...")
     pygame.quit()

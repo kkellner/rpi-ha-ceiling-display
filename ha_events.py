@@ -14,7 +14,7 @@ import asyncws
 import threading
 import logging
 import yaml
-
+import time
 import os, sys, signal
 
 
@@ -26,6 +26,10 @@ class HaEvents:
         """Simple WebSocket client for Home Assistant."""
 
         self.eventCount = 0
+        self.events = {}
+        self.shutdown = False
+        self.connected = False
+        self.lastDisconnectTime = time.time()
 
         self.ceiling_display = ceiling_display
         ymlfile = open("config.yml", 'r')
@@ -45,12 +49,39 @@ class HaEvents:
  
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        logger.info("calling processEvents")
         loop.run_until_complete(self.processEvents())
+        logger.warn("processEvents has ended")
         loop.close()
     
+    def allStatesToEvents(self, json_msg):
+        results = json_msg["result"]
+        for event in results:
+            eventId = event['entity_id']
+            self.events[eventId] = {"new_state": event}
+
+        #print(self.events)
 
     async def processEvents(self):
-        
+        while True:
+            try:
+                await self.processEvents2()
+            except ConnectionError as e:
+                logger.warn("ConnectionError: Type: %s Msg: %s", type(e), e)
+            except Exception as e:
+                logger.warn("Error: Type: %s Msg: %s", type(e), e)
+                #traceback.print_exc() 
+                traceback.print_exception(*sys.exc_info()) 
+            
+            self.events = {}
+            if self.connected == True:
+                self.connected = False
+                self.lastDisconnectTime = time.time()
+            await asyncio.sleep(5)
+
+    async def processEvents2(self):
+
+
         websocket = await asyncws.connect(self.websocketUrl)
 
         await websocket.send(json.dumps(
@@ -58,6 +89,7 @@ class HaEvents:
             'access_token': self.haAccessToken}
         ))
 
+        self.connected = True
         logger.info("get_states called")
         await websocket.send(json.dumps(
             {"id": 1, "type": "get_states"}
@@ -74,7 +106,7 @@ class HaEvents:
             json_msg = json.loads(message)
             if ('id' in json_msg and json_msg['id'] == 1):
                 logger.info("Got all states")
-                json_msg
+                self.allStatesToEvents(json_msg)
                 break
 
         logger.info("get_states complete")
@@ -83,8 +115,8 @@ class HaEvents:
             {'id': 2, 'type': 'subscribe_events', 'event_type': 'state_changed'}
         ))
 
-        #eventCount = 0
         while True:
+
             message = await websocket.recv()
             if message is None:
                 break
@@ -94,12 +126,11 @@ class HaEvents:
             if (json_msg['type'] == 'event' and json_msg['event']['event_type'] == 'state_changed'):
                 entityId = json_msg['event']['data']['entity_id']
                 newState = json_msg['event']['data']['new_state']['state']
-                if ( entityId == 'sensor.wind_gust'):
-                    print("\nentity_id:", entityId)
-                    print("   new state:", json_msg['event']['data']['new_state']['state'])
-                else:
-                    print(f"\rEvents: {self.eventCount}", end='', flush=True)
 
+                self.events[entityId] = json_msg['event']['data']
+
+                print(f"\rEvents: {self.eventCount}", end='', flush=True)
+ 
 
 def main():
     """

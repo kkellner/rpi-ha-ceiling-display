@@ -27,6 +27,11 @@ import os
 import threading
 from colorsys import rgb_to_hls, hls_to_rgb
 
+
+# This is a value returned from an entity that is unknown (e.g., HA first starting)
+UNKNOWN_VALUE = "unknown"
+UNAVAILABLE_VALUE = "unavailable"
+
 class HdmiDisplay:
 
     def __init__(self, ceiling_display):
@@ -66,6 +71,19 @@ class HdmiDisplay:
         # thread1.setDaemon(False)
         # thread1.start()
 
+    def getEventValue(self, eventId, defaultValue):
+        events = self.ceiling_display.ha_events.events
+        if eventId in events:
+            value =  events[eventId]['new_state']['state']
+            if value == UNKNOWN_VALUE or value == UNAVAILABLE_VALUE:
+                value = defaultValue
+        else:
+            value = defaultValue
+        return value
+
+    def getEventValueFloat(self, eventId):
+        return float(self.getEventValue(eventId, float("nan")))
+
 
     def updateDisplayLoop(self):
 
@@ -83,10 +101,13 @@ class HdmiDisplay:
 
             self.screen.fill((0,0,0))
 
-            outsideTemperature = 32.0
-            insideTemperature = 68.0
-            windSpeed = 0.0
-            windGust = 2.0
+            haEvents = self.ceiling_display.ha_events
+            events = haEvents.events
+
+            outsideTemperature = self.getEventValueFloat('sensor.outdoor_temperature')
+            insideTemperature = self.getEventValueFloat('sensor.zbtemp301_bedroom_temperature')
+            windSpeed = self.getEventValueFloat('sensor.wind_speed')
+            windGust = self.getEventValueFloat('sensor.wind_gust')
 
             self.updateTime(80,60)
 
@@ -95,7 +116,11 @@ class HdmiDisplay:
             self.updateOutsideTemperature(80, 300, outsideTemperature)
             self.updateWind(370, 300, windSpeed, windGust)
 
-            self.updateDebug(80, 400, "Events", "{:d}".format(self.ceiling_display.ha_events.eventCount))
+            self.updateDebug(80, 420, "Events", "{:d}".format(haEvents.eventCount))
+            self.updateDebug(80, 450, "Connected", "{:s}".format(str(haEvents.connected)))
+            if not haEvents.connected:
+                disconnectedDuration = time.time() - haEvents.lastDisconnectTime
+                self.updateDebug(80, 480, "Disconnected", "{:.1f}".format(disconnectedDuration))
 
             pygame.display.update()
 
@@ -190,7 +215,14 @@ class HdmiDisplay:
 
     def updateWind(self, windDisplayX: int, windDisplayY: int, windSpeed: float, windGust: float ):
         # Wind
-        formattedWind = "{:.0f}-{:.0f}".format(windSpeed, windGust)
+        windSpeedFormatted = "{:.0f}".format(windSpeed)
+        windGustFormatted = "{:.0f}".format(windGust)
+
+        if windSpeedFormatted != windGustFormatted:
+            formattedWind = "{:s}-{:s}".format(windSpeedFormatted, windGustFormatted)
+        else:
+            formattedWind = "{:s}".format(windSpeedFormatted)
+
         tempText=self.fontValue.render(formattedWind, True, colorRed, (0,0,0))
         tempText_width = tempText.get_width()
         tempText_height = tempText.get_height()

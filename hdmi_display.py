@@ -158,8 +158,8 @@ class HdmiDisplay:
             self.displayEnabled = enabled
             logger.info("Set Display Enabled: %s", str(enabled))
             if is_raspberrypi():
-                logger.info("Running on Raspberry PI - turn on/off HDMI")
-                cmd = "vcgencmd display_power {}".format(int(enabled)) 
+                cmd = "/usr/bin/vcgencmd display_power {}".format(int(enabled)) 
+                logger.info("Running on Raspberry PI - turn on/off HDMI, cmd: %s", cmd)
                 os.system(cmd)
 
 

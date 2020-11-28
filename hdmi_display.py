@@ -25,19 +25,29 @@
 import time,pygame
 import os
 import threading
+import platform
+import logging
 from colorsys import rgb_to_hls, hls_to_rgb
 
+logger = logging.getLogger(__name__)
 
 # This is a value returned from an entity that is unknown (e.g., HA first starting)
 UNKNOWN_VALUE = "unknown"
 UNAVAILABLE_VALUE = "unavailable"
 
+DEFAULT_DISPLAY_BRIGHTNESS = 50.0
 class HdmiDisplay:
 
     def __init__(self, ceiling_display):
         #initialize pygame library
 
         self.ceiling_display = ceiling_display
+        self.displayEnabled = True
+        self.brightness = DEFAULT_DISPLAY_BRIGHTNESS
+
+        self.valueColor = colorBaseRed
+        self.labelColor = darken_color(self.valueColor, 0.5)
+ 
 
     def startup(self):
 
@@ -81,14 +91,22 @@ class HdmiDisplay:
             value = defaultValue
         return value
 
-    def getEventValueFloat(self, eventId):
-        return float(self.getEventValue(eventId, float("nan")))
+    def getEventValueFloat(self, eventId, defaultValue=float("nan")):
+        return float(self.getEventValue(eventId, defaultValue))
+
+    def getEventValueInt(self, eventId, defaultValue = -1):
+        return int(self.getEventValue(eventId, defaultValue))
+
+    def getEventValueBoolean(self, eventId, defaultValue = False):
+        return str2bool(self.getEventValue(eventId, defaultValue))
 
 
     def updateDisplayLoop(self):
 
         done = False
         while not done:
+
+            self.updateBrightness()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -127,16 +145,34 @@ class HdmiDisplay:
             # Update interval (fps)
             self.clock.tick(2)
 
+    def updateBrightness(self):
+        b = self.getEventValueFloat('input_number.ceiling_display_brightness', DEFAULT_DISPLAY_BRIGHTNESS)
+        if (b != self.brightness):
+            self.brightness = b
+            logger.info("brightness: %i", b)
+            self.valueColor = adjust_color_lightness(colorBaseRed, 1-((100-b)/100))
+            self.labelColor = darken_color(self.valueColor, 0.5)
+
+        enabled = self.getEventValueBoolean('input_boolean.ceiling_display_enabled', True)
+        if (enabled != self.displayEnabled):
+            self.displayEnabled = enabled
+            logger.info("Set Display Enabled: %s", str(enabled))
+            if is_raspberrypi():
+                logger.info("Running on Raspberry PI - turn on/off HDMI")
+                cmd = "vcgencmd display_power {}".format(int(enabled)) 
+                os.system(cmd)
+
+
     def updateDebug(self, displayX: int, displayY: int, label:str, debugText: str):
         # Temperature
         displayXValueOffset = 0
         
-        labelText=self.fontSmall.render(label+": ", True, colorRedLabel, (0,0,0))
+        labelText=self.fontSmall.render(label+": ", True, self.labelColor, (0,0,0))
         labelText_width = labelText.get_width()
         self.screen.blit(labelText, (displayX, displayY))
 
         formattedValue = debugText
-        valueText=self.fontSmall.render(formattedValue, True, colorRed, (0,0,0))
+        valueText=self.fontSmall.render(formattedValue, True, self.valueColor, (0,0,0))
         valueText_width = valueText.get_width()
         valueText_height = valueText.get_height()
         self.screen.blit(valueText, (displayX + labelText_width+ displayXValueOffset, displayY))
@@ -165,13 +201,13 @@ class HdmiDisplay:
 
         # Time (HH:MM)
         #text_width, text_height = theFont1.size(str(theTime))
-        timeText=self.fontValue.render(str(theTime), True, colorRed, (0,0,0))
+        timeText=self.fontValue.render(str(theTime), True, self.valueColor, (0,0,0))
         timeText_width = timeText.get_width()
         timeText_height = timeText.get_height()
         self.screen.blit(timeText, (displayX,displayY))
 
         # AM/PM 
-        ampmText=self.fontSmall.render(str(ampm), True, colorRed, (0,0,0))
+        ampmText=self.fontSmall.render(str(ampm), True, self.valueColor, (0,0,0))
         ampmText_width = ampmText.get_width()
         ampmText_height = ampmText.get_height()
         self.screen.blit(ampmText, (displayX+timeText_width-ampmText_width, displayY-ampmText_height+5))
@@ -180,16 +216,16 @@ class HdmiDisplay:
         # Temperature
         displayXValueOffset = 150
         label = "Out:"
-        labelText=self.fontValue.render(label, True, colorRedLabel, (0,0,0))
+        labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
         self.screen.blit(labelText, (displayX,displayY))
 
         formattedValue = "{:.0f}".format(temperature)
-        valueText=self.fontValue.render(formattedValue, True, colorRed, (0,0,0))
+        valueText=self.fontValue.render(formattedValue, True, self.valueColor, (0,0,0))
         valueText_width = valueText.get_width()
         valueText_height = valueText.get_height()
         self.screen.blit(valueText, (displayX + displayXValueOffset, displayY))
 
-        degreeSymbolText=self.fontSmall.render(str("°"), True, colorRed, (0,0,0))
+        degreeSymbolText=self.fontSmall.render(str("°"), True, self.valueColor, (0,0,0))
         degreeSymbolText_width = degreeSymbolText.get_width()
         degreeSymbolText_height = degreeSymbolText.get_height()
         self.screen.blit(degreeSymbolText, (displayX+displayXValueOffset+valueText_width+4, displayY+10))
@@ -198,16 +234,16 @@ class HdmiDisplay:
         # Temperature
         displayXValueOffset = 150
         label = "In:"
-        labelText=self.fontValue.render(label, True, colorRedLabel, (0,0,0))
+        labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
         self.screen.blit(labelText, (displayX,displayY))
 
         formattedValue = "{:.0f}".format(temperature)
-        valueText=self.fontValue.render(formattedValue, True, colorRed, (0,0,0))
+        valueText=self.fontValue.render(formattedValue, True, self.valueColor, (0,0,0))
         valueText_width = valueText.get_width()
         valueText_height = valueText.get_height()
         self.screen.blit(valueText, (displayX + displayXValueOffset, displayY))
 
-        degreeSymbolText=self.fontSmall.render(str("°"), True, colorRed, (0,0,0))
+        degreeSymbolText=self.fontSmall.render(str("°"), True, self.valueColor, (0,0,0))
         degreeSymbolText_width = degreeSymbolText.get_width()
         degreeSymbolText_height = degreeSymbolText.get_height()
         self.screen.blit(degreeSymbolText, (displayX+displayXValueOffset+valueText_width+4, displayY+10))
@@ -223,11 +259,11 @@ class HdmiDisplay:
         else:
             formattedWind = "{:s}".format(windSpeedFormatted)
 
-        tempText=self.fontValue.render(formattedWind, True, colorRed, (0,0,0))
+        tempText=self.fontValue.render(formattedWind, True, self.valueColor, (0,0,0))
         tempText_width = tempText.get_width()
         tempText_height = tempText.get_height()
         self.screen.blit(tempText, (windDisplayX,windDisplayY))
-        mphText=self.fontSmall.render(str("mph"), True, colorRed, (0,0,0))
+        mphText=self.fontSmall.render(str("mph"), True, self.valueColor, (0,0,0))
         mphText_width = mphText.get_width()
         mphText_height = mphText.get_height()
         self.screen.blit(mphText, (windDisplayX+tempText_width+4, windDisplayY+tempText_height-mphText_height-15))
@@ -260,14 +296,23 @@ def lighten_color(color, factor=0.1):
 def darken_color(color, factor=0.1):
     return adjust_color_lightness(color, 1 - factor)
 
+def str2bool(v):
+    if type(v) is bool:
+        return v
+    return v.lower() in ("yes", "true", "on", "t", "1")
 
-colorWhite = (255, 255, 255)
-colorGray = (163, 163, 163)
-colorRed = (209, 79, 79)
-colorBlue = (82, 116, 227)
-colorGreen = (72, 181, 94)
+def is_raspberrypi():
+    try:
+        with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
+            if 'raspberry pi' in m.read().lower(): return True
+    except Exception: pass
+    return False
 
-colorRedLabel = darken_color(colorRed, 0.5)
+colorBaseWhite = (255, 255, 255)
+colorBaseGray = (163, 163, 163)
+colorBaseRed = (209, 79, 79)
+colorBaseBlue = (82, 116, 227)
+colorBaseGreen = (72, 181, 94)
 
 
 def main():

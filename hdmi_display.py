@@ -23,7 +23,7 @@
 
 
 import time,pygame
-import os
+import os, io
 import threading
 import platform
 import logging

@@ -59,8 +59,10 @@ class HdmiDisplay:
 
         #theFont1=pygame.font.Font(None,105)
 
-        self.fontLabel=pygame.font.Font('fonts/Malter Sans Demo2.otf',72)
-        self.fontValue=pygame.font.Font('fonts/Malter Sans Demo2.otf',72)
+        self.fontTime=pygame.font.Font('fonts/Malter Sans Demo2.otf',120)
+
+        self.fontLabel=pygame.font.Font('fonts/Malter Sans Demo2.otf',60)
+        self.fontValue=pygame.font.Font('fonts/Malter Sans Demo2.otf',60)
         self.fontSmall=pygame.font.Font('fonts/Malter Sans Demo2.otf',24)
 
         #theFont2=pygame.font.Font('fonts/DS-DIGII2.otf',88)
@@ -129,16 +131,16 @@ class HdmiDisplay:
 
             self.updateTime(80,60)
 
-            self.updateInsideTemperature(80, 200, insideTemperature)
+            self.updateInsideTemperature(80, 250, insideTemperature)
 
-            self.updateOutsideTemperature(80, 300, outsideTemperature)
-            self.updateWind(370, 300, windSpeed, windGust)
+            self.updateOutsideTemperature(80, 350, outsideTemperature)
+            self.updateWind(370, 350, windSpeed, windGust)
 
-            self.updateDebug(80, 420, "Events", "{:d}".format(haEvents.eventCount))
-            self.updateDebug(80, 450, "Connected", "{:s}".format(str(haEvents.connected)))
+            self.updateDebug(80, 470, "Events", "{:d}".format(haEvents.eventCount))
+            self.updateDebug(80, 500, "Connected", "{:s}".format(str(haEvents.connected)))
             if not haEvents.connected:
                 disconnectedDuration = time.time() - haEvents.lastDisconnectTime
-                self.updateDebug(80, 480, "Disconnected", "{:.1f}".format(disconnectedDuration))
+                self.updateDebug(80, 530, "Disconnected", "{:.1f}".format(disconnectedDuration))
 
             pygame.display.update()
 
@@ -201,7 +203,7 @@ class HdmiDisplay:
 
         # Time (HH:MM)
         #text_width, text_height = theFont1.size(str(theTime))
-        timeText=self.fontValue.render(str(theTime), True, self.valueColor, (0,0,0))
+        timeText=self.fontTime.render(str(theTime), True, self.valueColor, (0,0,0))
         timeText_width = timeText.get_width()
         timeText_height = timeText.get_height()
         self.screen.blit(timeText, (displayX,displayY))

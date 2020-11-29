@@ -9,8 +9,9 @@
 
 import asyncio
 import json
-
+import traceback
 import asyncws
+import socket
 import threading
 import logging
 import yaml
@@ -47,13 +48,17 @@ class HaEvents:
 
     def processEventsX(self):
  
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        logger.info("calling processEvents")
-        loop.run_until_complete(self.processEvents())
-        logger.warn("processEvents has ended")
-        loop.close()
-    
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            logger.info("calling processEvents")
+            loop.run_until_complete(self.processEvents())
+            logger.warn("processEvents has ended")
+            loop.close()
+        except Exception as e:
+            logger.error("Error: Type: %s Msg: %s", type(e), e)
+            traceback.print_exception(*sys.exc_info()) 
+                    
     def allStatesToEvents(self, json_msg):
         results = json_msg["result"]
         for event in results:
@@ -66,7 +71,7 @@ class HaEvents:
         while True:
             try:
                 await self.processEvents2()
-            except ConnectionError as e:
+            except (ConnectionError, socket.timeout, socket.herror, socket.gaierror) as e:
                 logger.warn("ConnectionError: Type: %s Msg: %s", type(e), e)
             except Exception as e:
                 logger.warn("Error: Type: %s Msg: %s", type(e), e)

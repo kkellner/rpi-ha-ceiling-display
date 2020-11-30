@@ -85,6 +85,19 @@ class HdmiDisplay:
         # thread1.setDaemon(False)
         # thread1.start()
 
+    def getEventAttribute(self, eventId, attributeName, defaultValue = UNAVAILABLE_VALUE):
+        events = self.ceiling_display.ha_events.events
+        if eventId in events:
+            attributes =  events[eventId]['new_state']['attributes']
+            value = UNAVAILABLE_VALUE
+            if attributeName in attributes:
+                value = attributes[attributeName]
+            if value == UNKNOWN_VALUE or value == UNAVAILABLE_VALUE:
+                value = defaultValue
+        else:
+            value = defaultValue
+        return value
+
     def getEventValue(self, eventId, defaultValue):
         events = self.ceiling_display.ha_events.events
         if eventId in events:
@@ -130,19 +143,26 @@ class HdmiDisplay:
             insideTemperature = self.getEventValueFloat('sensor.zbtemp301_bedroom_temperature')
             windSpeed = self.getEventValueFloat('sensor.wind_speed')
             windGust = self.getEventValueFloat('sensor.wind_gust')
+            rainRate = self.getEventValueFloat('sensor.daily_rain_rate')
 
-            self.updateTime(80,60)
+            self.updateTime(10,60)
 
-            self.updateInsideTemperature(80, 250, insideTemperature)
+            self.updateInsideTemperature(10, 250, insideTemperature)
 
-            self.updateOutsideTemperature(80, 350, outsideTemperature)
-            self.updateWind(370, 350, windSpeed, windGust)
+            self.updateOutsideTemperature(10, 350, outsideTemperature)
+            self.updateWind(300, 350, windSpeed, windGust)
 
-            self.updateDebug(80, 470, "Events", "{:d}".format(haEvents.eventCount))
-            self.updateDebug(80, 500, "Connected", "{:s}".format(str(haEvents.connected)))
+            if rainRate > 0:
+                self.updateRain(530, 350, rainRate)
+            
+            self.updateHvac(500, 60)
+
+            self.updateDebug(10, 470, "Events", "{:d}".format(haEvents.eventCount))
+            self.updateDebug(10, 500, "Connected", "{:s}".format(str(haEvents.connected)))
             if not haEvents.connected:
                 disconnectedDuration = time.time() - haEvents.lastDisconnectTime
-                self.updateDebug(80, 530, "Disconnected", "{:.1f}".format(disconnectedDuration))
+                formattedDuration = formatDuration(disconnectedDuration)
+                self.updateDebug(10, 530, "Disconnected", formattedDuration)
 
             pygame.display.update()
 
@@ -182,7 +202,29 @@ class HdmiDisplay:
         self.screen.blit(valueText, (displayX + labelText_width+ displayXValueOffset, displayY))
     
 
- 
+    def updateHvac(self, displayX: int, displayY: int):
+        # HVAC (heating/AC + fan state)
+        hvacAction = self.getEventAttribute("climate.thermostat", "hvac_action")
+        fanAction = self.getEventAttribute("climate.thermostat", "fan_action")
+
+        formattedValue = ""
+        if hvacAction != "idle":
+            formattedValue = hvacAction + " "
+        if fanAction != "idle":
+            formattedValue += "fan "+fanAction
+        
+        label = ""
+        labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
+        labelText_width = labelText.get_width()
+        self.screen.blit(labelText, (displayX,displayY))
+
+        valueText=self.fontValue.render(formattedValue, True, self.valueColor, (0,0,0))
+        valueText_width = valueText.get_width()
+        valueText_height = valueText.get_height()
+        self.screen.blit(valueText, (displayX + labelText_width+8, displayY))
+
+
+
     def updateTime(self, displayX: int, displayY: int):
 
 
@@ -263,17 +305,33 @@ class HdmiDisplay:
         else:
             formattedWind = "{:s}".format(windSpeedFormatted)
 
-        tempText=self.fontValue.render(formattedWind, True, self.valueColor, (0,0,0))
-        tempText_width = tempText.get_width()
-        tempText_height = tempText.get_height()
-        self.screen.blit(tempText, (windDisplayX,windDisplayY))
-        mphText=self.fontSmall.render(str("mph"), True, self.valueColor, (0,0,0))
-        mphText_width = mphText.get_width()
-        mphText_height = mphText.get_height()
-        self.screen.blit(mphText, (windDisplayX+tempText_width+4, windDisplayY+tempText_height-mphText_height-15))
+        valueText=self.fontValue.render(formattedWind, True, self.valueColor, (0,0,0))
+        valueText_width = valueText.get_width()
+        valueText_height = valueText.get_height()
+        self.screen.blit(valueText, (windDisplayX,windDisplayY))
+        suffixText=self.fontSmall.render(str("mph"), True, self.valueColor, (0,0,0))
+        suffixText_width = suffixText.get_width()
+        suffixText_height = suffixText.get_height()
+        self.screen.blit(suffixText, (windDisplayX+valueText_width+4, windDisplayY+valueText_height-suffixText_height-10))
 
-    def updateField(self, windDisplayX: int, windDisplayY: int, label: str, value: float, suffix: str):
-        x=0
+    def updateRain(self, displayX: int, displayY: int, rainRate: float):
+
+        # Rain
+        label = "Rain:"
+        labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
+        labelText_width = labelText.get_width()
+        self.screen.blit(labelText, (displayX,displayY))
+
+        formattedValue = "{:.2f}".format(rainRate)
+        valueText=self.fontValue.render(formattedValue, True, self.valueColor, (0,0,0))
+        valueText_width = valueText.get_width()
+        valueText_height = valueText.get_height()
+        self.screen.blit(valueText, (displayX + labelText_width+8, displayY))
+
+        suffixText=self.fontSmall.render("in", True, self.valueColor, (0,0,0))
+        suffixText_width = suffixText.get_width()
+        suffixText_height = suffixText.get_height()
+        self.screen.blit(suffixText, (displayX+valueText_width+labelText_width+10, displayY+valueText_height-suffixText_height-10))
 
 
 # def brightness(color)
@@ -284,7 +342,17 @@ class HdmiDisplay:
 #       c.B * c.B * .068);     # Blue
 # }
 
+def formatDuration(duration):
+    hours, remainder = divmod(duration, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    durationFormatted = ""
+    if hours > 0:
+        durationFormatted += "{:.0f}h ".format(hours)
+    if minutes > 0:
+        durationFormatted += "{:.0f}m ".format(minutes)
+    durationFormatted += "{:0.0f}s".format(seconds)
 
+    return durationFormatted
 
 
 def adjust_color_lightness(color, factor):

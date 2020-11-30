@@ -127,15 +127,15 @@ class HaEvents:
                 break
             #print (message)
             self.eventCount += 1
-            json_msg = json.loads(message)
-            if (json_msg['type'] == 'event' and json_msg['event']['event_type'] == 'state_changed'):
-                entityId = json_msg['event']['data']['entity_id']
-                newState = json_msg['event']['data']['new_state']['state']
-
-                self.events[entityId] = json_msg['event']['data']
-
-                print(f"\rEvents: {self.eventCount}", end='', flush=True)
- 
+            try:
+                json_msg = json.loads(message)
+                if (json_msg['type'] == 'event' and json_msg['event']['event_type'] == 'state_changed'):
+                    entityId = json_msg['event']['data']['entity_id']
+                    #newState = json_msg['event']['data']['new_state']
+                    self.events[entityId] = json_msg['event']['data']
+                    print(f"\rEvents: {self.eventCount}", end='', flush=True)
+            except Exception as e:
+                        logger.warn("Error extracting data from json_msg. Error: %s Msg: %s, json: %s", type(e), e, message)
 
 def main():
     """

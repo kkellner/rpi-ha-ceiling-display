@@ -59,7 +59,7 @@ class HdmiDisplay:
 
         #theFont1=pygame.font.Font(None,105)
 
-        self.fontTime=pygame.font.Font('fonts/Malter Sans Demo2.otf',120)
+        self.fontTime=pygame.font.Font('fonts/Malter Sans Demo2.otf',150)
 
         self.fontLabel=pygame.font.Font('fonts/Malter Sans Demo2.otf',60)
         self.fontValue=pygame.font.Font('fonts/Malter Sans Demo2.otf',60)

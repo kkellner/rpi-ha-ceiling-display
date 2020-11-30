@@ -69,7 +69,14 @@ class HdmiDisplay:
         #theFont3=pygame.font.Font('fonts/DS-DIGIT2.otf',84)
 
         self.clock = pygame.time.Clock()
-        self.screen = pygame.display.set_mode((1280, 720))
+
+        if is_raspberrypi():
+            # Set fullscreen on Raspberry Pi
+            self.screen = pygame.display.set_mode((1280, 720), pygame.FULLSCREEN)
+        else:
+            # For testing on MacOS
+            self.screen = pygame.display.set_mode((1280, 720))
+        
         self.screen.fill((0,0,0))
         pygame.display.flip()
         pygame.display.set_caption('Pi Time')

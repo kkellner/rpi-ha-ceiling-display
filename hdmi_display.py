@@ -70,12 +70,7 @@ class HdmiDisplay:
 
         self.clock = pygame.time.Clock()
 
-        if is_raspberrypi():
-            # Set fullscreen on Raspberry Pi
-            self.screen = pygame.display.set_mode((1280, 720), pygame.FULLSCREEN)
-        else:
-            # For testing on MacOS
-            self.screen = pygame.display.set_mode((1280, 720))
+        self.screen = pygame.display.set_mode((1280, 720))
         
         self.screen.fill((0,0,0))
         pygame.display.flip()

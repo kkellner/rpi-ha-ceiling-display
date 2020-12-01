@@ -65,6 +65,10 @@ class HdmiDisplay:
         self.fontValue=pygame.font.Font('fonts/Malter Sans Demo2.otf',60)
         self.fontSmall=pygame.font.Font('fonts/Malter Sans Demo2.otf',24)
 
+        self.fontLabel2=pygame.font.Font('fonts/Malter Sans Demo2.otf',40)
+        self.fontValue2=pygame.font.Font('fonts/Malter Sans Demo2.otf',40)
+
+
         #theFont2=pygame.font.Font('fonts/DS-DIGII2.otf',88)
         #theFont3=pygame.font.Font('fonts/DS-DIGIT2.otf',84)
 
@@ -97,6 +101,9 @@ class HdmiDisplay:
         else:
             value = defaultValue
         return value
+
+    def getEventAttributeInt(self, eventId, attributeName, defaultValue = -1):
+        return int(self.getEventAttribute(eventId, attributeName, defaultValue))
 
     def getEventValue(self, eventId, defaultValue):
         events = self.ceiling_display.ha_events.events
@@ -155,14 +162,16 @@ class HdmiDisplay:
             if rainRate > 0:
                 self.updateRain(530, 350, rainRate)
             
-            self.updateHvac(500, 60)
+            self.updateHvac(10, 450)
 
-            self.updateDebug(10, 470, "Events", "{:d}".format(haEvents.eventCount))
-            self.updateDebug(10, 500, "Connected", "{:s}".format(str(haEvents.connected)))
-            if not haEvents.connected:
+            self.updateDebug(10, 530, "Events", "{:d}".format(haEvents.eventCount))
+            
+            if haEvents.connected:
+                self.updateDebug(10, 560, "Connected", "{:s}".format(str(haEvents.connected)))
+            else:
                 disconnectedDuration = time.time() - haEvents.lastDisconnectTime
                 formattedDuration = formatDuration(disconnectedDuration)
-                self.updateDebug(10, 530, "Disconnected", formattedDuration)
+                self.updateDebug(10, 560, "Disconnected", formattedDuration)
 
             pygame.display.update()
 
@@ -203,25 +212,24 @@ class HdmiDisplay:
     
 
     def updateHvac(self, displayX: int, displayY: int):
-        # HVAC (heating/AC + fan state)
+        # HVAC status
+        # Example: HVAC 65 current 64: heating
         hvacAction = self.getEventAttribute("climate.thermostat", "hvac_action")
-        fanAction = self.getEventAttribute("climate.thermostat", "fan_action")
+        #fanAction = self.getEventAttribute("climate.thermostat", "fan_action")
+        set_temperature = self.getEventAttributeInt("climate.thermostat", "temperature")
+        current_temperature = self.getEventAttributeInt("climate.thermostat", "current_temperature")
 
-        formattedValue = ""
-        if hvacAction != "idle":
-            formattedValue = hvacAction + " "
-        if fanAction != "idle":
-            formattedValue += "fan "+fanAction
-        
-        label = ""
-        labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
+        formattedValue = "{:d}° {:s}: {:d}°".format(set_temperature, hvacAction, current_temperature)
+     
+        label = "HVAC:"
+        labelText=self.fontLabel2.render(label, True, self.labelColor, (0,0,0))
         labelText_width = labelText.get_width()
         self.screen.blit(labelText, (displayX,displayY))
 
-        valueText=self.fontValue.render(formattedValue, True, self.valueColor, (0,0,0))
+        valueText=self.fontValue2.render(formattedValue, True, self.valueColor, (0,0,0))
         valueText_width = valueText.get_width()
-        valueText_height = valueText.get_height()
-        self.screen.blit(valueText, (displayX + labelText_width+8, displayY))
+        self.screen.blit(valueText, (displayX + labelText_width+35, displayY))
+
 
 
 
@@ -265,16 +273,16 @@ class HdmiDisplay:
         labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
         self.screen.blit(labelText, (displayX,displayY))
 
-        formattedValue = "{:.0f}".format(temperature)
+        formattedValue = "{:.0f}°".format(temperature)
         valueText=self.fontValue.render(formattedValue, True, self.valueColor, (0,0,0))
         valueText_width = valueText.get_width()
         valueText_height = valueText.get_height()
         self.screen.blit(valueText, (displayX + displayXValueOffset, displayY))
 
-        degreeSymbolText=self.fontSmall.render(str("°"), True, self.valueColor, (0,0,0))
-        degreeSymbolText_width = degreeSymbolText.get_width()
-        degreeSymbolText_height = degreeSymbolText.get_height()
-        self.screen.blit(degreeSymbolText, (displayX+displayXValueOffset+valueText_width+4, displayY+10))
+        # degreeSymbolText=self.fontSmall.render(str("°"), True, self.valueColor, (0,0,0))
+        # degreeSymbolText_width = degreeSymbolText.get_width()
+        # degreeSymbolText_height = degreeSymbolText.get_height()
+        # self.screen.blit(degreeSymbolText, (displayX+displayXValueOffset+valueText_width+4, displayY+10))
 
     def updateInsideTemperature(self, displayX: int, displayY: int, temperature: float):
         # Temperature
@@ -283,16 +291,16 @@ class HdmiDisplay:
         labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
         self.screen.blit(labelText, (displayX,displayY))
 
-        formattedValue = "{:.0f}".format(temperature)
+        formattedValue = "{:.0f}°".format(temperature)
         valueText=self.fontValue.render(formattedValue, True, self.valueColor, (0,0,0))
         valueText_width = valueText.get_width()
         valueText_height = valueText.get_height()
         self.screen.blit(valueText, (displayX + displayXValueOffset, displayY))
 
-        degreeSymbolText=self.fontSmall.render(str("°"), True, self.valueColor, (0,0,0))
-        degreeSymbolText_width = degreeSymbolText.get_width()
-        degreeSymbolText_height = degreeSymbolText.get_height()
-        self.screen.blit(degreeSymbolText, (displayX+displayXValueOffset+valueText_width+4, displayY+10))
+        # degreeSymbolText=self.fontSmall.render(str("°"), True, self.valueColor, (0,0,0))
+        # degreeSymbolText_width = degreeSymbolText.get_width()
+        # degreeSymbolText_height = degreeSymbolText.get_height()
+        # self.screen.blit(degreeSymbolText, (displayX+displayXValueOffset+valueText_width+4, displayY+10))
 
 
     def updateWind(self, windDisplayX: int, windDisplayY: int, windSpeed: float, windGust: float ):

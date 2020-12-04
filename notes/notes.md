@@ -69,9 +69,11 @@ Occasional flash for less then a second of something white (bright) - Notice it 
 
 ## Lost HDMI signal for a few seconds
 
-Lost signal in middle of night and showed the connect Anybeam screen for 4 seconds or so.  It auto-reconnected.
+Lost signal in middle of night and showed the connect Anybeam screen for 4 seconds or so.  It auto-reconnected.  This has occured once (that I noticed) in the last 4 days.  The problem is this screen is VERY bright when you are sleeping in a completely dark room.
 
-TOOD: Image
+Here is the screen you see for a few seconds:
+![disconnect screen](disconnected_screen.jpg)
+
 
 ## Buzzing sound
 

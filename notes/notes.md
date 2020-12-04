@@ -83,3 +83,16 @@ Twice over 4 days I heard a buzzing type noise come from Anybeam (I don't think 
 
 There is a very faint white (gray?) line at the bottom of the display -- seems to be after the 720th row of the display.  After adjusting many setting in software with no fix, I just put some black electrical tape on the very bottom of the lens.  This masked off the line.  No a big deal and it was an easy workaround.
 
+# Attempted fixes
+
+The following changes were made in an attempt to fix the issue(s)
+
+1. Replaced the USB power supply and cable to the AnyBeam projector.
+1. Replaced the Raspberry Pi (hardware)
+1. Changed to pygame fps from 2 to 30.
+1. I have another micro-HDMI cable on order to verify that is not the issue.
+
+None of the above changes have had any effect on these issues.
+
+
+

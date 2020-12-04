@@ -21,6 +21,8 @@ The following images show how the AnyBeam is mounted on a gooseneck to aim the p
 
 ![setup2](projector_setup2.jpg)
 
+Note: you will see some some black electrical tape on the AnyBeam projector -- There was some light bleed through where the case is connected together.  I put the tape on to block the light since my head is right next to the projector.
+
 
 # Software
 This repo contains the Python code that runs on Linux on the Rasepberry Pi. It uses the [Pygame](https://www.pygame.org/wiki/about)] library to create the framebuffer / image that is output to the HDMI interface. The display image is very simple, initialized at 1280 x 720 resolution to match AnyBeam native resolution and contains just a few lines of text. This is an example of what the display shows:

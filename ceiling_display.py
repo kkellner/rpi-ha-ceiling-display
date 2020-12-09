@@ -49,6 +49,8 @@ class CeilingDisplay:
         self.hdmi_display.startup()
         
         #loop.close()
+        logger.warn("about to exit")
+        sys.exit(0) 
 
 
     def signal_handler(self, signal, frame):
@@ -67,8 +69,8 @@ def main():
     The main function
     :return:
     """
-    if os.geteuid() != 0:
-        exit("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+    #if os.geteuid() != 0:
+    #    exit("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
 
   
     ceilingDisplay = CeilingDisplay()

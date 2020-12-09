@@ -51,7 +51,9 @@ class HdmiDisplay:
 
     def startup(self):
 
-        pygame.init()
+        #pygame.init()
+        pygame.display.init()
+        pygame.font.init()
         pygame.mouse.set_visible(False)
 
         # Print a list of all available fonts
@@ -74,7 +76,8 @@ class HdmiDisplay:
 
         self.clock = pygame.time.Clock()
 
-        self.screen = pygame.display.set_mode((1280, 720))
+        self.screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+        #self.screen = pygame.display.set_mode((1280, 720))
         
         self.screen.fill((0,0,0))
         pygame.display.flip()
@@ -84,6 +87,11 @@ class HdmiDisplay:
         print(pygame.display.Info())
 
         self.updateDisplayLoop()
+        logger.warn("#### Exiting updateDisplayLoop")
+        pygame.display.quit()
+        logger.warn("#### about to call pygame.quit()")
+
+        pygame.quit()
 
         # thread1 = threading.Thread(target=(lambda: self.updateDisplayLoop() ))
         # thread1.setDaemon(False)
@@ -137,9 +145,11 @@ class HdmiDisplay:
                     done = True
                     break
                     
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                #if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                if event.type == pygame.KEYDOWN:
                     done = True
                     break
+                #logger.info("gui-event: %s", str(event))
 
             self.screen.fill((0,0,0))
 

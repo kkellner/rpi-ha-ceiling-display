@@ -204,6 +204,16 @@ class HdmiDisplay:
                 cmd = "/usr/bin/vcgencmd display_power {}".format(int(enabled)) 
                 logger.info("Running on Raspberry PI - turn on/off HDMI, cmd: %s", cmd)
                 os.system(cmd)
+            else:
+                if enabled:
+                   cmd = "/usr/bin/xrandr --output HDMI-1 --auto" 
+                else:
+                   cmd = "/usr/bin/xrandr --output HDMI-1 --off" 
+
+                logger.info("turn on/off HDMI, cmd: %s", cmd)
+                os.system(cmd)
+
+             
 
 
     def updateDebug(self, displayX: int, displayY: int, label:str, debugText: str):

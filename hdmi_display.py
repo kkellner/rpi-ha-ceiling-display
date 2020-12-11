@@ -194,7 +194,8 @@ class HdmiDisplay:
         self.brightness = brightnessPercent
         logger.info("Set brightness: %i", brightnessPercent)
         self.valueColor = adjust_color_lightness(colorBaseRed, 1-((100-brightnessPercent)/100))
-        self.labelColor = darken_color(self.valueColor, 0.5)
+        labelBrightness = (brightnessPercent / 100) ** 0.5 * .5
+        self.labelColor = darken_color(self.valueColor, labelBrightness)
 
     def updateBrightness(self):
         b = self.getEventValueFloat('input_number.ceiling_display_brightness', self.brightness)

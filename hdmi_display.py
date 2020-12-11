@@ -43,11 +43,8 @@ class HdmiDisplay:
 
         self.ceiling_display = ceiling_display
         self.displayEnabled = True
-        self.brightness = DEFAULT_DISPLAY_BRIGHTNESS
-
-        self.valueColor = colorBaseRed
-        self.labelColor = darken_color(self.valueColor, 0.5)
- 
+        self.setBrightness(DEFAULT_DISPLAY_BRIGHTNESS)
+        
 
     def startup(self):
 
@@ -164,38 +161,46 @@ class HdmiDisplay:
 
             self.updateTime(10,60)
 
-            self.updateInsideTemperature(10, 250, insideTemperature)
-
-            self.updateOutsideTemperature(10, 350, outsideTemperature)
-            self.updateWind(300, 350, windSpeed, windGust)
-
-            if rainRate > 0:
-                self.updateRain(530, 350, rainRate)
-            
-            self.updateHvac(10, 450)
-
-            self.updateDebug(10, 530, "Events", "{:d}".format(haEvents.eventCount))
-            
             if haEvents.connected:
-                self.updateDebug(10, 560, "Connected", "{:s}".format(str(haEvents.connected)))
+
+                self.updateInsideTemperature(10, 250, insideTemperature)
+
+                self.updateOutsideTemperature(10, 350, outsideTemperature)
+                self.updateWind(300, 350, windSpeed, windGust)
+
+                if rainRate > 0:
+                    self.updateRain(530, 350, rainRate)
+                
+                self.updateHvac(10, 450)
+
+                self.updateDebug(10, 530, "Events", "{:d}".format(haEvents.eventCount))
+            
+                #self.updateDebug(10, 560, "Connected", "{:s}".format(str(haEvents.connected)))
+                self.updateDebug(10, 560, "Connect Attempts", "{:s}".format(str(haEvents.connectAttemptCount)))
+                self.updateDebug(10, 590, "Successsful Connects", "{:s}".format(str(haEvents.connectSuccessCount)))
             else:
                 disconnectedDuration = time.time() - haEvents.lastDisconnectTime
                 formattedDuration = formatDuration(disconnectedDuration)
-                self.updateDebug(10, 560, "Disconnected", formattedDuration)
+                self.updateDebug(10, 530, "Disconnected", formattedDuration)
+                self.updateDebug(10, 560, "Connect Attempts", "{:s}".format(str(haEvents.connectAttemptCount)))
+                self.updateDebug(10, 590, "Successsful Connects", "{:s}".format(str(haEvents.connectSuccessCount)))
 
             pygame.display.update()
 
             # Update interval (fps)
             self.clock.tick(2)
 
-    def updateBrightness(self):
-        b = self.getEventValueFloat('input_number.ceiling_display_brightness', DEFAULT_DISPLAY_BRIGHTNESS)
-        if (b != self.brightness):
-            self.brightness = b
-            logger.info("brightness: %i", b)
-            self.valueColor = adjust_color_lightness(colorBaseRed, 1-((100-b)/100))
-            self.labelColor = darken_color(self.valueColor, 0.5)
+    def setBrightness(self, brightnessPercent):
+        self.brightness = brightnessPercent
+        logger.info("Set brightness: %i", brightnessPercent)
+        self.valueColor = adjust_color_lightness(colorBaseRed, 1-((100-brightnessPercent)/100))
+        self.labelColor = darken_color(self.valueColor, 0.5)
 
+    def updateBrightness(self):
+        b = self.getEventValueFloat('input_number.ceiling_display_brightness', self.brightness)
+        if (b != self.brightness):
+            self.setBrightness(b)
+      
         enabled = self.getEventValueBoolean('input_boolean.ceiling_display_enabled', True)
         if (enabled != self.displayEnabled):
             self.displayEnabled = enabled
@@ -204,14 +209,15 @@ class HdmiDisplay:
                 cmd = "/usr/bin/vcgencmd display_power {}".format(int(enabled)) 
                 logger.info("Running on Raspberry PI - turn on/off HDMI, cmd: %s", cmd)
                 os.system(cmd)
-            else:
+            elif is_linux():
                 if enabled:
                    cmd = "/usr/bin/xrandr --output HDMI-1 --auto" 
                 else:
                    cmd = "/usr/bin/xrandr --output HDMI-1 --off" 
-
-                logger.info("turn on/off HDMI, cmd: %s", cmd)
+                logger.info("Running on Linux - turn on/off HDMI, cmd: %s", cmd)
                 os.system(cmd)
+            else:
+                logger.info("Running on OSX? - can't turn on/off HDMI")
 
              
 
@@ -407,6 +413,9 @@ def is_raspberrypi():
             if 'raspberry pi' in m.read().lower(): return True
     except Exception: pass
     return False
+
+def is_linux():
+    return platform.system() == 'Linux'
 
 colorBaseWhite = (255, 255, 255)
 colorBaseGray = (163, 163, 163)

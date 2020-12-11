@@ -11,6 +11,7 @@ import asyncio
 import json
 import traceback
 import asyncws
+#import websockets
 import socket
 import threading
 import logging
@@ -21,16 +22,25 @@ import os, sys, signal
 
 logger = logging.getLogger(__name__)
 
+PINGPONG_INTERVAL_SECONDS = 15
+PINGPONG_MAX_RESPONSE_TIME_SECONDS = 5
+RECONNECT_DELAY_SECONDS = 5
+
 class HaEvents:
 
     def __init__(self, ceiling_display):
         """Simple WebSocket client for Home Assistant."""
 
+        self.connectAttemptCount = 0
+        self.connectSuccessCount = 0
         self.eventCount = 0
+        self.nextRequestId = 1
         self.events = {}
         self.shutdown = False
         self.connected = False
         self.lastDisconnectTime = time.time()
+        self.lastPongId = 0
+        self.loop = None
 
         self.ceiling_display = ceiling_display
         ymlfile = open("config.yml", 'r')
@@ -45,19 +55,54 @@ class HaEvents:
         thread1 = threading.Thread(target=(lambda: self.processEventsX() ))
         thread1.setDaemon(True)
         thread1.start()
+    
+    async def pingPongLoop(self, websocket):
+
+        # Loop forever performing a ping/pong
+        try:
+            while True:
+                #time.sleep(PINGPONG_TIME)
+                await asyncio.sleep(PINGPONG_INTERVAL_SECONDS) 
+                requestId = self.getNextRequestId()
+                logger.info("Send PING id: %d", requestId)
+                await websocket.send(json.dumps(
+                    {"id": requestId, "type": "ping"}
+                ))
+                await asyncio.sleep(PINGPONG_MAX_RESPONSE_TIME_SECONDS)
+                if (requestId != self.lastPongId):
+                    logger.warn("Did not get PONG within %d seconds. Force socket closed", PINGPONG_MAX_RESPONSE_TIME_SECONDS)
+                    # self.loop.stop()
+                    # Force the socket closed to unblock the recv() blocking method call
+                    websocket.writer.close() 
+                    break
+        except (ConnectionError, socket.timeout, socket.herror, socket.gaierror) as e:
+            logger.warn("pingPongLoop - ConnectionError: Type: %s Msg: %s", type(e), e)
+            websocket.writer.close()
+        except Exception as e:
+            logger.warn("pingPongLoop - Error: Type: %s Msg: %s", type(e), e)
+            traceback.print_exception(*sys.exc_info())
+            websocket.writer.close()
+
 
     def processEventsX(self):
  
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            logger.info("calling processEvents")
-            loop.run_until_complete(self.processEvents())
-            logger.warn("processEvents has ended")
-            loop.close()
-        except Exception as e:
-            logger.error("Error: Type: %s Msg: %s", type(e), e)
-            traceback.print_exception(*sys.exc_info()) 
+        while True:
+            try:
+                self.loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(self.loop)
+                #self.loop = asyncio.get_event_loop()
+                logger.info("calling processEvents")
+                self.loop.run_until_complete(self.processEvents())
+                logger.warn("processEvents has ended")
+                self.loop.close()
+            except Exception as e:
+                logger.error("processEventsX:Error: Type: %s Msg: %s", type(e), e)
+                traceback.print_exception(*sys.exc_info()) 
+
+            # Wait 5 second before we try to reconnect
+            #await asyncio.sleep(5)
+            logger.warn("Waiting %d seconds before reconnect to Home Assistant attempt", RECONNECT_DELAY_SECONDS)
+            time.sleep(RECONNECT_DELAY_SECONDS)
                     
     def allStatesToEvents(self, json_msg):
         results = json_msg["result"]
@@ -68,74 +113,93 @@ class HaEvents:
         #print(self.events)
 
     async def processEvents(self):
-        while True:
-            try:
-                await self.processEvents2()
-            except (ConnectionError, socket.timeout, socket.herror, socket.gaierror) as e:
-                logger.warn("ConnectionError: Type: %s Msg: %s", type(e), e)
-            except Exception as e:
-                logger.warn("Error: Type: %s Msg: %s", type(e), e)
-                #traceback.print_exc() 
-                traceback.print_exception(*sys.exc_info()) 
-            
-            self.events = {}
-            if self.connected == True:
-                self.connected = False
-                self.lastDisconnectTime = time.time()
-            await asyncio.sleep(5)
+    
+        try:
+            await self.processEvents2()
+        except (ConnectionError, socket.timeout, socket.herror, socket.gaierror) as e:
+            logger.warn("processEvents:ConnectionError: Type: %s Msg: %s", type(e), e)
+        except Exception as e:
+            logger.warn("processEvents:Error: Type: %s Msg: %s", type(e), e)
+            #traceback.print_exc() 
+            traceback.print_exception(*sys.exc_info()) 
+        
+        self.events = {}
+        if self.connected == True:
+            self.connected = False
+            self.lastDisconnectTime = time.time()
+        
+
 
     async def processEvents2(self):
+    # HA websocket docs:
+    # https://developers.home-assistant.io/docs/api/websocket/
 
+        #async with websockets.connect(self.websocketUrl) as websocket:
 
+        self.connectAttemptCount += 1
+        logger.info("HA connectAttemptCount: %d", self.connectAttemptCount)
         websocket = await asyncws.connect(self.websocketUrl)
-
+        
         await websocket.send(json.dumps(
             {'type': 'auth',
             'access_token': self.haAccessToken}
         ))
 
-        self.connected = True
-        logger.info("get_states called")
-        await websocket.send(json.dumps(
-            {"id": 1, "type": "get_states"}
-        ))
+        startupRequestId = self.getNextRequestId()
     
+        self.connected = True
+        self.connectSuccessCount += 1
+        logger.info("HA connectSuccessCount: %d", self.connectSuccessCount)
+        await websocket.send(json.dumps(
+            {"id": startupRequestId, "type": "get_states"}
+        ))
+        
         # Format
         # {"id": 1, "type": "result", "success": true, "result": [{"entity_id": "person.kkellner", "state": "home", "attributes": {"editable": true, "id": "5f3d180e25bd4e098dc4a5510221746f", "source": "device_tracker.kurtphone", "user_id": "4447436a5424483bb91d1d4fd28e2a3f", "friendly_name": "kkellner", "last_changed": "2020-11-23T18:12:14.287334+00:00", "last_updated": "2020-11-23T18:12:26.184702+00:00", "context": {"id": "597d90a0be7b9e6bcd51058f45607969", "parent_id": null, "user_id": null}}, {"entity_id": "person.jkellner", "state": "home", "attributes": {"editable": true, "id": "d707594627274c208bd99a265203dc0c",
 
-        while True:
-            message = await websocket.recv()
-            if message is None:
-                break
-            #print (message)
-            json_msg = json.loads(message)
-            if ('id' in json_msg and json_msg['id'] == 1):
-                logger.info("Got all states")
-                self.allStatesToEvents(json_msg)
-                break
+        # TODO: Ping/Pong:  https://developers.home-assistant.io/docs/api/websocket/#pings-and-pongs
+        loop = asyncio.get_event_loop()
+        asyncio.run_coroutine_threadsafe(self.pingPongLoop(websocket), loop)
 
-        logger.info("get_states complete")
-
-        await websocket.send(json.dumps(
-            {'id': 2, 'type': 'subscribe_events', 'event_type': 'state_changed'}
-        ))
-
+        # Loop forever processing states/events from HA
         while True:
 
             message = await websocket.recv()
             if message is None:
+                logger.info("Stream was closed")
                 break
             #print (message)
             self.eventCount += 1
             try:
                 json_msg = json.loads(message)
-                if (json_msg['type'] == 'event' and json_msg['event']['event_type'] == 'state_changed'):
+                if ('id' in json_msg and json_msg['id'] == startupRequestId):
+                    # Startup response to get-all-states request 
+                    logger.info("Got all states")
+                    self.allStatesToEvents(json_msg)
+                    logger.info("allStatesToEvents complete")
+                    # Subscribe to all events
+                    await websocket.send(json.dumps(
+                    {'id': self.getNextRequestId(), 'type': 'subscribe_events', 'event_type': 'state_changed'}
+                    ))
+                elif (json_msg['type'] == 'event' and json_msg['event']['event_type'] == 'state_changed'):
                     entityId = json_msg['event']['data']['entity_id']
                     #newState = json_msg['event']['data']['new_state']
                     self.events[entityId] = json_msg['event']['data']
                     print(f"\rEvents: {self.eventCount}", end='', flush=True)
+                elif (json_msg['type'] == 'pong'):
+                    self.lastPongId = json_msg['id']
+                    logger.info("Got a PONG id: %d", self.lastPongId)
+                else:
+                    logger.info("Unknown event: %s", str(json_msg))
+
             except Exception as e:
-                        logger.warn("Error extracting data from json_msg. Error: %s Msg: %s, json: %s", type(e), e, message)
+                logger.warn("processEvents2: Error extracting data from json_msg. Error: %s Msg: %s, json: %s", type(e), e, message)
+
+
+    def getNextRequestId(self):
+        requestId = self.nextRequestId
+        self.nextRequestId += 1
+        return requestId
 
 def main():
     """

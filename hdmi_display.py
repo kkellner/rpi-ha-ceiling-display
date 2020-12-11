@@ -67,10 +67,6 @@ class HdmiDisplay:
         self.fontLabel2=pygame.font.Font('fonts/Malter Sans Demo2.otf',40)
         self.fontValue2=pygame.font.Font('fonts/Malter Sans Demo2.otf',40)
 
-
-        #theFont2=pygame.font.Font('fonts/DS-DIGII2.otf',88)
-        #theFont3=pygame.font.Font('fonts/DS-DIGIT2.otf',84)
-
         self.clock = pygame.time.Clock()
 
         self.screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
@@ -78,21 +74,16 @@ class HdmiDisplay:
         
         self.screen.fill((0,0,0))
         pygame.display.flip()
-        pygame.display.set_caption('Pi Time')
-        # Clear screen
-
+        pygame.display.set_caption('Ceiling Display Time')
+    
         print(pygame.display.Info())
 
         self.updateDisplayLoop()
-        logger.warn("#### Exiting updateDisplayLoop")
+        logger.warning("#### Exiting updateDisplayLoop")
         pygame.display.quit()
-        logger.warn("#### about to call pygame.quit()")
-
+        logger.warning("#### about to call pygame.quit()")
         pygame.quit()
 
-        # thread1 = threading.Thread(target=(lambda: self.updateDisplayLoop() ))
-        # thread1.setDaemon(False)
-        # thread1.start()
 
     def getEventAttribute(self, eventId, attributeName, defaultValue = UNAVAILABLE_VALUE):
         events = self.ceiling_display.ha_events.events
@@ -142,8 +133,7 @@ class HdmiDisplay:
                     done = True
                     break
                     
-                #if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                if event.type == pygame.KEYDOWN:
+                if event.type == pygame.KEYDOWN and (event.key == pygame.K_ESCAPE or event.key == pygame.K_x or event.key == pygame.K_q):
                     done = True
                     break
                 #logger.info("gui-event: %s", str(event))
@@ -294,7 +284,7 @@ class HdmiDisplay:
         self.screen.blit(ampmText, (displayX+timeText_width-ampmText_width, displayY-ampmText_height+5))
 
     def updateOutsideTemperature(self, displayX: int, displayY: int, temperature: float):
-        # Temperature
+        # Temperature Outside
         displayXValueOffset = 150
         label = "Out:"
         labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
@@ -306,13 +296,8 @@ class HdmiDisplay:
         valueText_height = valueText.get_height()
         self.screen.blit(valueText, (displayX + displayXValueOffset, displayY))
 
-        # degreeSymbolText=self.fontSmall.render(str("°"), True, self.valueColor, (0,0,0))
-        # degreeSymbolText_width = degreeSymbolText.get_width()
-        # degreeSymbolText_height = degreeSymbolText.get_height()
-        # self.screen.blit(degreeSymbolText, (displayX+displayXValueOffset+valueText_width+4, displayY+10))
-
     def updateInsideTemperature(self, displayX: int, displayY: int, temperature: float):
-        # Temperature
+        # Temperature Inside
         displayXValueOffset = 150
         label = "In:"
         labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
@@ -324,14 +309,9 @@ class HdmiDisplay:
         valueText_height = valueText.get_height()
         self.screen.blit(valueText, (displayX + displayXValueOffset, displayY))
 
-        # degreeSymbolText=self.fontSmall.render(str("°"), True, self.valueColor, (0,0,0))
-        # degreeSymbolText_width = degreeSymbolText.get_width()
-        # degreeSymbolText_height = degreeSymbolText.get_height()
-        # self.screen.blit(degreeSymbolText, (displayX+displayXValueOffset+valueText_width+4, displayY+10))
-
 
     def updateWind(self, windDisplayX: int, windDisplayY: int, windSpeed: float, windGust: float ):
-        # Wind
+        # Wind Speed
         windSpeedFormatted = "{:.0f}".format(windSpeed)
         windGustFormatted = "{:.0f}".format(windGust)
 
@@ -350,7 +330,6 @@ class HdmiDisplay:
         self.screen.blit(suffixText, (windDisplayX+valueText_width+4, windDisplayY+valueText_height-suffixText_height-10))
 
     def updateRain(self, displayX: int, displayY: int, rainRate: float):
-
         # Rain
         label = "Rain:"
         labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
@@ -368,14 +347,6 @@ class HdmiDisplay:
         suffixText_height = suffixText.get_height()
         self.screen.blit(suffixText, (displayX+valueText_width+labelText_width+10, displayY+valueText_height-suffixText_height-10))
 
-
-# def brightness(color)
-# {
-#    return (int)Math.Sqrt(
-#       c.R * c.R * .241 +     # Red
-#       c.G * c.G * .691 +     # Green
-#       c.B * c.B * .068);     # Blue
-# }
 
 def formatDuration(duration):
     hours, remainder = divmod(duration, 3600)

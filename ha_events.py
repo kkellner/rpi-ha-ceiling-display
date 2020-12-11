@@ -70,16 +70,16 @@ class HaEvents:
                 ))
                 await asyncio.sleep(PINGPONG_MAX_RESPONSE_TIME_SECONDS)
                 if (requestId != self.lastPongId):
-                    logger.warn("Did not get PONG within %d seconds. Force socket closed", PINGPONG_MAX_RESPONSE_TIME_SECONDS)
+                    logger.warning("Did not get PONG within %d seconds. Force socket closed", PINGPONG_MAX_RESPONSE_TIME_SECONDS)
                     # self.loop.stop()
                     # Force the socket closed to unblock the recv() blocking method call
                     websocket.writer.close() 
                     break
         except (ConnectionError, socket.timeout, socket.herror, socket.gaierror) as e:
-            logger.warn("pingPongLoop - ConnectionError: Type: %s Msg: %s", type(e), e)
+            logger.warning("pingPongLoop - ConnectionError: Type: %s Msg: %s", type(e), e)
             websocket.writer.close()
         except Exception as e:
-            logger.warn("pingPongLoop - Error: Type: %s Msg: %s", type(e), e)
+            logger.warning("pingPongLoop - Error: Type: %s Msg: %s", type(e), e)
             traceback.print_exception(*sys.exc_info())
             websocket.writer.close()
 
@@ -93,14 +93,14 @@ class HaEvents:
                 #self.loop = asyncio.get_event_loop()
                 logger.info("calling processEvents")
                 self.loop.run_until_complete(self.processEvents())
-                logger.warn("processEvents has ended")
+                logger.warning("processEvents has ended")
                 self.loop.close()
             except Exception as e:
                 logger.error("processEventsX:Error: Type: %s Msg: %s", type(e), e)
                 traceback.print_exception(*sys.exc_info()) 
 
             # Wait RECONNECT_DELAY_SECONDS before we try to reconnect to HA
-            logger.warn("Waiting %d seconds before reconnect to Home Assistant attempt", RECONNECT_DELAY_SECONDS)
+            logger.warning("Waiting %d seconds before reconnect to Home Assistant attempt", RECONNECT_DELAY_SECONDS)
             time.sleep(RECONNECT_DELAY_SECONDS)
                     
     def allStatesToEvents(self, json_msg):
@@ -115,9 +115,9 @@ class HaEvents:
         try:
             await self.processEvents2()
         except (ConnectionError, socket.timeout, socket.herror, socket.gaierror) as e:
-            logger.warn("processEvents:ConnectionError: Type: %s Msg: %s", type(e), e)
+            logger.warning("processEvents:ConnectionError: Type: %s Msg: %s", type(e), e)
         except Exception as e:
-            logger.warn("processEvents:Error: Type: %s Msg: %s", type(e), e)
+            logger.warning("processEvents:Error: Type: %s Msg: %s", type(e), e)
             #traceback.print_exc() 
             traceback.print_exception(*sys.exc_info()) 
         
@@ -191,7 +191,7 @@ class HaEvents:
                     logger.info("Unknown event: %s", str(json_msg))
 
             except Exception as e:
-                logger.warn("processEvents2: Error extracting data from json_msg. Error: %s Msg: %s, json: %s", type(e), e, message)
+                logger.warning("processEvents2: Error extracting data from json_msg. Error: %s Msg: %s, json: %s", type(e), e, message)
 
 
     def getNextRequestId(self):

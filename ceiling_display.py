@@ -49,7 +49,7 @@ class CeilingDisplay:
         self.hdmi_display.startup()
         
         #loop.close()
-        logger.warn("about to exit")
+        logger.warning("about to exit")
         sys.exit(0) 
 
 

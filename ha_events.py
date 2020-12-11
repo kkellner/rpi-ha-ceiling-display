@@ -11,7 +11,6 @@ import asyncio
 import json
 import traceback
 import asyncws
-#import websockets
 import socket
 import threading
 import logging
@@ -22,8 +21,8 @@ import os, sys, signal
 
 logger = logging.getLogger(__name__)
 
-PINGPONG_INTERVAL_SECONDS = 15
-PINGPONG_MAX_RESPONSE_TIME_SECONDS = 5
+PINGPONG_INTERVAL_SECONDS = 30
+PINGPONG_MAX_RESPONSE_TIME_SECONDS = 30
 RECONNECT_DELAY_SECONDS = 5
 
 class HaEvents:
@@ -58,11 +57,11 @@ class HaEvents:
         thread1.start()
     
     async def pingPongLoop(self, websocket):
-
+        
+        # Ping/Pong:  https://developers.home-assistant.io/docs/api/websocket/#pings-and-pongs
         # Loop forever performing a ping/pong
         try:
             while True:
-                #time.sleep(PINGPONG_TIME)
                 await asyncio.sleep(PINGPONG_INTERVAL_SECONDS) 
                 requestId = self.getNextRequestId()
                 logger.info("Send PING id: %d", requestId)
@@ -100,8 +99,7 @@ class HaEvents:
                 logger.error("processEventsX:Error: Type: %s Msg: %s", type(e), e)
                 traceback.print_exception(*sys.exc_info()) 
 
-            # Wait 5 second before we try to reconnect
-            #await asyncio.sleep(5)
+            # Wait RECONNECT_DELAY_SECONDS before we try to reconnect to HA
             logger.warn("Waiting %d seconds before reconnect to Home Assistant attempt", RECONNECT_DELAY_SECONDS)
             time.sleep(RECONNECT_DELAY_SECONDS)
                     
@@ -111,7 +109,6 @@ class HaEvents:
             eventId = event['entity_id']
             self.events[eventId] = {"new_state": event}
 
-        #print(self.events)
 
     async def processEvents(self):
     
@@ -133,11 +130,9 @@ class HaEvents:
 
 
     async def processEvents2(self):
-    # HA websocket docs:
-    # https://developers.home-assistant.io/docs/api/websocket/
-
-        #async with websockets.connect(self.websocketUrl) as websocket:
-
+        # HA websocket docs:
+        # https://developers.home-assistant.io/docs/api/websocket/
+ 
         self.connectAttemptCount += 1
         logger.info("HA connectAttemptCount: %d", self.connectAttemptCount)
         websocket = await asyncws.connect(self.websocketUrl)
@@ -159,7 +154,7 @@ class HaEvents:
         # Format
         # {"id": 1, "type": "result", "success": true, "result": [{"entity_id": "person.kkellner", "state": "home", "attributes": {"editable": true, "id": "5f3d180e25bd4e098dc4a5510221746f", "source": "device_tracker.kurtphone", "user_id": "4447436a5424483bb91d1d4fd28e2a3f", "friendly_name": "kkellner", "last_changed": "2020-11-23T18:12:14.287334+00:00", "last_updated": "2020-11-23T18:12:26.184702+00:00", "context": {"id": "597d90a0be7b9e6bcd51058f45607969", "parent_id": null, "user_id": null}}, {"entity_id": "person.jkellner", "state": "home", "attributes": {"editable": true, "id": "d707594627274c208bd99a265203dc0c",
 
-        # TODO: Ping/Pong:  https://developers.home-assistant.io/docs/api/websocket/#pings-and-pongs
+        # Setup a background Ping/Pong to ensure websocket connection is good.
         loop = asyncio.get_event_loop()
         asyncio.run_coroutine_threadsafe(self.pingPongLoop(websocket), loop)
 
@@ -224,8 +219,9 @@ if __name__ == '__main__':
     main()
 
 
-
+#################################################################################################
 # All states example reponse:
+#
 # {
 #   "id": 1,
 #   "type": "result",
@@ -251,8 +247,9 @@ if __name__ == '__main__':
 #       }
 #     },
 
-#
+#################################################################################################
 # Subscribe example event:
+#
 # {
 #   "id": 1,
 #   "type": "event",

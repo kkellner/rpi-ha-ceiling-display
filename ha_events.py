@@ -38,6 +38,7 @@ class HaEvents:
         self.events = {}
         self.shutdown = False
         self.connected = False
+        self.statesSynced = False
         self.lastDisconnectTime = time.time()
         self.lastPongId = 0
         self.loop = None
@@ -126,6 +127,7 @@ class HaEvents:
         self.events = {}
         if self.connected == True:
             self.connected = False
+            self.statesSynced = False
             self.lastDisconnectTime = time.time()
         
 
@@ -174,12 +176,13 @@ class HaEvents:
                 json_msg = json.loads(message)
                 if ('id' in json_msg and json_msg['id'] == startupRequestId):
                     # Startup response to get-all-states request 
-                    logger.info("Got all states")
+                    logger.info("Got all states response")
                     self.allStatesToEvents(json_msg)
                     logger.info("allStatesToEvents complete")
+                    self.statesSynced = True
                     # Subscribe to all events
                     await websocket.send(json.dumps(
-                    {'id': self.getNextRequestId(), 'type': 'subscribe_events', 'event_type': 'state_changed'}
+                        {'id': self.getNextRequestId(), 'type': 'subscribe_events', 'event_type': 'state_changed'}
                     ))
                 elif (json_msg['type'] == 'event' and json_msg['event']['event_type'] == 'state_changed'):
                     entityId = json_msg['event']['data']['entity_id']

@@ -161,8 +161,8 @@ class HdmiDisplay:
 
             self.updateTime(10,60)
 
-            if haEvents.connected:
-
+            if haEvents.statesSynced:
+          
                 self.updateInsideTemperature(10, 250, insideTemperature)
 
                 self.updateOutsideTemperature(10, 350, outsideTemperature)
@@ -172,9 +172,9 @@ class HdmiDisplay:
                     self.updateRain(530, 350, rainRate)
                 
                 self.updateHvac(10, 450)
-
+                
+            if haEvents.connected:
                 self.updateDebug(10, 530, "Events", "{:d}".format(haEvents.eventCount))
-            
                 #self.updateDebug(10, 560, "Connected", "{:s}".format(str(haEvents.connected)))
                 self.updateDebug(10, 560, "Connect Attempts", "{:s}".format(str(haEvents.connectAttemptCount)))
                 self.updateDebug(10, 590, "Successsful Connects", "{:s}".format(str(haEvents.connectSuccessCount)))

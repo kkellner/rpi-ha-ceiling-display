@@ -28,6 +28,12 @@ import threading
 import platform
 import logging
 from colorsys import rgb_to_hls, hls_to_rgb
+try:
+    import pydbus
+    timedated = pydbus.SystemBus().get(".timedate1")
+except ImportError:
+    print("pydbus library not found")
+    timedated = None
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +50,9 @@ class HdmiDisplay:
         self.ceiling_display = ceiling_display
         self.displayEnabled = True
         self.setBrightness(DEFAULT_DISPLAY_BRIGHTNESS)
-        
+
+        logger.info("time synced: %s", str(self.isTimeSynced()) )
+
 
     def startup(self):
 
@@ -84,6 +92,14 @@ class HdmiDisplay:
         logger.warning("#### about to call pygame.quit()")
         pygame.quit()
 
+    def isTimeSynced(self):
+        """
+        Return True if time is synchronized.
+        """
+        if timedated is not None:
+            return timedated.NTPSynchronized
+        else:
+            return False
 
     def getEventAttribute(self, eventId, attributeName, defaultValue = UNAVAILABLE_VALUE):
         events = self.ceiling_display.ha_events.events
@@ -186,6 +202,9 @@ class HdmiDisplay:
         self.valueColor = adjust_color_lightness(colorBaseRed, 1-((100-brightnessPercent)/100))
         labelBrightness = (brightnessPercent / 100) ** 0.5 * .5
         self.labelColor = darken_color(self.valueColor, labelBrightness)
+        WARN_COLOR=(161, 159, 47)
+        warnBrightness = brightnessPercent
+        self.warnColor = adjust_color_lightness(WARN_COLOR, 1-((100-warnBrightness)/100))
 
     def updateBrightness(self):
         b = self.getEventValueFloat('input_number.ceiling_display_brightness', self.brightness)
@@ -252,7 +271,6 @@ class HdmiDisplay:
 
     def updateTime(self, displayX: int, displayY: int):
 
-
         epochNow = time.time()
         now = time.localtime(epochNow)
         halfSecond = (epochNow % 1) >= 0.5
@@ -268,8 +286,6 @@ class HdmiDisplay:
         if theTime.startswith('0'):
             theTime = theTime.replace('0', ' ', 1)
 
-
-
         # Time (HH:MM)
         #text_width, text_height = theFont1.size(str(theTime))
         timeText=self.fontTime.render(str(theTime), True, self.valueColor, (0,0,0))
@@ -282,6 +298,15 @@ class HdmiDisplay:
         ampmText_width = ampmText.get_width()
         ampmText_height = ampmText.get_height()
         self.screen.blit(ampmText, (displayX+timeText_width-ampmText_width, displayY-ampmText_height+5))
+
+        if not self.isTimeSynced():
+            warnColor = self.warnColor
+            pygame.draw.rect(self.screen,warnColor,(displayX,displayY+50,timeText_width,2))
+            pygame.draw.rect(self.screen,warnColor,(displayX,displayY+90,timeText_width,2))
+            pygame.draw.rect(self.screen,warnColor,(displayX,displayY+130,timeText_width,2))
+            notSyncedText=self.fontSmall.render("Not Synced", True, warnColor, (0,0,0))
+            self.screen.blit(notSyncedText, (displayX+40, displayY-ampmText_height+5))
+
 
     def updateOutsideTemperature(self, displayX: int, displayY: int, temperature: float):
         # Temperature Outside

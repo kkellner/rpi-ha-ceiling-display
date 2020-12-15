@@ -175,27 +175,29 @@ class HdmiDisplay:
 
     def openBrowser(self):
         
-        caps = DesiredCapabilities().FIREFOX
+        caps = DesiredCapabilities().CHROME
+        #caps = DesiredCapabilities().FIREFOX
         #caps["pageLoadStrategy"] = "normal"  #  complete
         #caps["pageLoadStrategy"] = "eager"  #  interactive
         caps["pageLoadStrategy"] = "none"
 
-        fireFoxOptions = webdriver.FirefoxOptions()
-        fireFoxOptions.add_argument("--start-maximized")
-        fireFoxOptions.add_argument("--disable-infobars")
-        fireFoxOptions.set_preference("dom.webnotifications.enabled", False)
-
-        driver = webdriver.Firefox(desired_capabilities=caps, firefox_options=fireFoxOptions)
+        # fireFoxOptions = webdriver.FirefoxOptions()
+        # fireFoxOptions.add_argument("--start-maximized")
+        # fireFoxOptions.add_argument("--disable-infobars")
+        # fireFoxOptions.set_preference("dom.webnotifications.enabled", False)
+        # driver = webdriver.Firefox(desired_capabilities=caps, firefox_options=fireFoxOptions)
         
-        #driver = webdriver.Firefox()
+        driver = webdriver.Chrome(desired_capabilities=caps)
+
+
         self.driver = driver
         driver.get(self.camUrl)
         driver.implicitly_wait(2)
         #action = ActionChains(driver)
         #action.send_keys(Keys.ALT, Keys.TAB)
-        time.sleep(5)
+        #time.sleep(5)
         ActionChains(driver) \
-            .send_keys(Keys.COMMAND + "f") \
+            .send_keys(Keys.CONTROL + Keys.COMMAND + "f") \
             .perform()
 
         # ActionChains(driver) \
@@ -210,7 +212,7 @@ class HdmiDisplay:
         # logger.info("Close broser")
         # driver.close()
         # driver.quit()
-        #driver.fullscreen_window()
+        driver.fullscreen_window()
 
 
     def updateTime(self, displayX: int, displayY: int):

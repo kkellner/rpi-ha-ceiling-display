@@ -78,6 +78,8 @@ class HdmiDisplay:
         self.clock = pygame.time.Clock()
 
         self.screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+        #self.screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE|pygame.HWSURFACE|pygame.DOUBLEBUF)
+
         #self.screen = pygame.display.set_mode((1280, 720))
         
         self.screen.fill((0,0,0))
@@ -184,6 +186,8 @@ class HdmiDisplay:
                 #self.updateDebug(10, 560, "Connected", "{:s}".format(str(haEvents.connected)))
                 self.updateDebug(10, 560, "Connect Attempts", "{:s}".format(str(haEvents.connectAttemptCount)))
                 self.updateDebug(10, 590, "Successsful Connects", "{:s}".format(str(haEvents.connectSuccessCount)))
+                self.updateDebug(10, 620, "Inet up", str(self.getEventValueBoolean("binary_sensor.internet_up")))
+
             else:
                 disconnectedDuration = time.time() - haEvents.lastDisconnectTime
                 formattedDuration = formatDuration(disconnectedDuration)
@@ -371,6 +375,20 @@ class HdmiDisplay:
         suffixText_width = suffixText.get_width()
         suffixText_height = suffixText.get_height()
         self.screen.blit(suffixText, (displayX+valueText_width+labelText_width+10, displayY+valueText_height-suffixText_height-10))
+
+
+
+
+# DO NOT USE THIS -- use the flag in HA
+def is_internet_connected():
+    try:
+        # connect to the host -- tells us if the host is actually
+        # reachable
+        socket.create_connection(("1.1.1.1", 53))
+        return True
+    except OSError:
+        pass
+    return False
 
 
 def formatDuration(duration):

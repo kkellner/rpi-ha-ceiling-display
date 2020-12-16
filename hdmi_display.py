@@ -275,6 +275,8 @@ class HdmiDisplay:
 
     def updateTime(self, displayX: int, displayY: int):
 
+        #pygame.draw.rect(self.screen,self.warnColor,(0,710,1280,2))
+
         epochNow = time.time()
         now = time.localtime(epochNow)
         halfSecond = (epochNow % 1) >= 0.5

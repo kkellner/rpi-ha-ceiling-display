@@ -23,6 +23,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.chrome.options import Options
 
 
+
 PROTOCOL = 'http'
 
 
@@ -186,8 +187,44 @@ class HdmiDisplay:
         # fireFoxOptions.add_argument("--disable-infobars")
         # fireFoxOptions.set_preference("dom.webnotifications.enabled", False)
         # driver = webdriver.Firefox(desired_capabilities=caps, firefox_options=fireFoxOptions)
-        
-        driver = webdriver.Chrome(desired_capabilities=caps)
+
+        chrome_options = Options()
+        chrome_options.add_argument("--kiosk")
+        chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
+
+        # "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+        #     --disable-hang-monitor
+        #     --disable-prompt-on-repost
+        #     --dom-automation
+        #     --full-memory-crash-report
+        #     --no-default-browser-check
+        #     --no-first-run
+        #     --disable-background-networking
+        #     --disable-sync
+        #     --disable-translate
+        #     --disable-web-resources
+        #     --safebrowsing-disable-auto-update
+        #     --safebrowsing-disable-download-protection
+        #     --disable-client-side-phishing-detection
+        #     --disable-component-update
+        #     --disable-default-apps
+        #     --enable-logging
+        #     --log-level=1
+        #     --ignore-certificate-errors
+        #     --no-default-browser-check
+        #     --test-type=ui
+        #     --user-data-dir="C:\Users\nik\AppData\Local\Temp\scoped_dir1972_4232"
+        #     --testing-channel=ChromeTestingInterface:1972.1
+        #     --noerrdialogs
+        #     --metrics-recording-only
+        #     --enable-logging
+        #     --disable-zero-browsers-open-for-tests
+        #     --allow-file-access
+        #     --allow-file-access-from-files about:blank
+
+
+        driver = webdriver.Chrome(desired_capabilities=caps, chrome_options=chrome_options)
+
 
 
         self.driver = driver
@@ -212,7 +249,7 @@ class HdmiDisplay:
         # logger.info("Close broser")
         # driver.close()
         # driver.quit()
-        driver.fullscreen_window()
+        #driver.fullscreen_window()
 
 
     def updateTime(self, displayX: int, displayY: int):

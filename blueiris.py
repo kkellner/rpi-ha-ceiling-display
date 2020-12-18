@@ -5,56 +5,60 @@ import asyncio
 import yaml
 import logging
 
-PROTOCOL = 'http'
-
-
-FORMAT = '%(asctime)-15s %(threadName)-10s %(levelname)6s %(message)s'
-logging.basicConfig(level=logging.DEBUG, format=FORMAT)
-
 logger = logging.getLogger(__name__)
-
-def main():  
-    loop = asyncio.get_event_loop()
-    future = asyncio.ensure_future(callBlueIris(), loop=loop)
-    try:
-        loop.run_until_complete(future)
-    except KeyboardInterrupt:
-        future.cancel()
-        loop.run_until_complete(future)
-        loop.close()
+class BlueIris:
 
 
-async def callBlueIris():
+    def __init__(self):
 
-    ymlfile = open("config.yml", 'r')
-    cfg = yaml.safe_load(ymlfile)
-    config = cfg['blueiris']
-    host = config['host']
-    username = config['username']
-    password = config['password']
+        logger.info("init")
+        ymlfile = open("config.yml", 'r')
+        cfg = yaml.safe_load(ymlfile)
+        config = cfg['blueiris']
+        self.protocol = 'http'
+        self.host = config['host']
+        self.username = config['username']
+        self.password = config['password']
+        
+        self.bi = None
 
-    async with ClientSession(raise_for_status=True) as sess:
-        blue = pyblueiris.BlueIris(sess, username, password, PROTOCOL, host, "", True)
-        #await blue.update_all_information()
-        #print(blue.attributes)
-        x = await blue.setup_session()
-        #print (x)
-        #await blue.update_all_information()
-        #print(blue.attributes)
-        await blue.update_camlist()
-        #print(blue.attributes)
-        camAttr = await blue.get_camera_details('cam24')
-        print ("#####")
-        #print (camAttr)
-        cam = pyblueiris.camera.BlueIrisCamera(blue, "cam24")
-        await cam.update_camconfig()
-        print (cam.mjpeg_url)
+    def startup(self):
+        logger.info("startup")
 
+    def login(self):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(self.async_login())
 
-        print(blue.client.blueiris_session)
+    async def async_login(self):
 
-        # http://172.20.0.160/mjpg/cam24/video.mjpg?session=37c828f9108a17ad5df97c213f2a6d1a
+        async with ClientSession(raise_for_status=True) as sess:
 
-if __name__ == '__main__':
-  main()
+            self.bi = pyblueiris.BlueIris(sess, self.username, self.password, self.protocol, self.host, "", True)
+
+            loginResult = await self.bi.setup_session()
+            if loginResult == False:
+                logger.error("Unable to login to Blue Iris")
+                return
+
+            #await blue.update_all_information()
+            #print(blue.attributes)
+            await self.bi.update_camlist()
+            #print(blue.attributes)
+
+    def getCamURL(self, camName):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(self.async_getCamURL(camName))
+
+    async def async_getCamURL(self, camName):
+            #camAttr = await blueiris.get_camera_details('cam24')
+            cam = pyblueiris.camera.BlueIrisCamera(self.bi, camName)
+            await cam.update_camconfig()
+
+            #print(bi.client.blueiris_session)
+            # http://172.20.0.160/mjpg/cam24/video.mjpg?session=37c828f9108a17ad5df97c213f2a6d1a
+            
+            fullUrl = "{}?session={}".format(cam.mjpeg_url, self.bi.client.blueiris_session)
+            logger.info("camera: %s url: %s", camName, fullUrl)
+
+            return fullUrl
 

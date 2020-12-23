@@ -1,6 +1,5 @@
 #!/usr/local/bin/python3
 
-import pyblueiris
 from aiohttp import ClientSession
 import asyncio
 import yaml
@@ -12,20 +11,10 @@ import threading
 import platform
 import socket
 from colorsys import rgb_to_hls, hls_to_rgb
-#from moviepy.editor import VideoFileClip
-
-#import webbrowser
-
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.webdriver.chrome.options import Options
 
 
-
-PROTOCOL = 'http'
-
+from blueiris import BlueIris
+from browser import Browser
 
 FORMAT = '%(asctime)-15s %(threadName)-10s %(levelname)6s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=FORMAT)
@@ -46,46 +35,7 @@ class HdmiDisplay:
         self.displayEnabled = True
         self.valueColor = colorBaseRed
 
-    def startup(self, camUrl):
-
-        self.camUrl =camUrl
-        #webbrowser.open('http://example.com')  # Go to example.com
-
-        # Docs: https://selenium-python.readthedocs.io/getting-started.html
-
-
-
-        # driver = webdriver.Firefox()
-
-        # # This came from a Java example
-        # # FirefoxProfile profile = new FirefoxProfile();
-        # #profile.setPreference("browser.fullscreen.autohide",true)
-        # #profile.setPreference("browser.fullscreen.animateUp",0)
-        # #WebDriver driver = new FirefoxDriver(profile);
-
-        # #driver.maximize_window()
-        # #driver.get("http://www.python.org")
-        # driver.get(camUrl)
-        # #driver.manage().window().fullscreen()
-        # driver.fullscreen_window()
-
-
-        # Note this needs to be the correct keystroke for the OS
-        #((FirefoxDriver)driver).getKeyboard().pressKey(Keys.F11);
-
-        # assert "Python" in driver.title
-        # elem = driver.find_element_by_name("q")
-        # elem.clear()
-        # elem.send_keys("pycon")
-        # elem.send_keys(Keys.RETURN)
-
-        # time.sleep(5)
-
-        # assert "No results found." not in driver.page_source
-        # driver.close()
-        # driver.quit()
-
-        # time.sleep(10)
+    def startup(self):
 
         #pygame.init()
         pygame.display.init()
@@ -119,17 +69,6 @@ class HdmiDisplay:
 
         print(pygame.display.Info())
 
-        # movie = pygame.movie.Movie('/Users/kkellner/Downloads/sample_640x360.mpeg')
-        # self.movie_screen = pygame.Surface(movie.get_size()).convert()
-        # movie.set_display(self.movie_screen)
-        # movie.play()
-
-        # Docs:  https://zulko.github.io/moviepy/
-        #clip = VideoFileClip('/Users/kkellner/Downloads/sample_640x360.mpeg')
-        #clip = VideoFileClip('http://172.20.0.160/mjpg/cam24/video.mjpg?session=0dc6090a7b1602cf07064ef91f6809cc')
-        #clip.preview()
-
-
         self.updateDisplayLoop()
         logger.warning("#### Exiting updateDisplayLoop")
         pygame.display.quit()
@@ -152,105 +91,24 @@ class HdmiDisplay:
                 #logger.info("gui-event: %s", str(event))
 
                 if event.type == pygame.KEYDOWN and (event.key == pygame.K_o):
-                    self.openBrowserThread()
+                    blueiris = BlueIris()
+                    blueiris.login()
+                    camName = "fdoor"
+                    camUrl = blueiris.getCamURL(camName)
+                    logger.info("CAM URL: %s", camUrl)
+                    self.browser = Browser()
+                    self.browser.openBrowserThread(camUrl)
+                    
                 if event.type == pygame.KEYDOWN and (event.key == pygame.K_c):
-                    self.driver.close()
+                    self.browser.close()
 
 
             self.screen.fill((0,0,0))
-
             self.updateTime(10,60)
-
-
-            # screen.blit(self.movie_screen,(0,0))
-
             pygame.display.update()
 
             # Update interval (fps)
             self.clock.tick(2)
-
-    def openBrowserThread(self):
-        thread1 = threading.Thread(target=(lambda: self.openBrowser() ))
-        thread1.setDaemon(True)
-        thread1.start()
-
-    def openBrowser(self):
-        
-        caps = DesiredCapabilities().CHROME
-        #caps = DesiredCapabilities().FIREFOX
-        #caps["pageLoadStrategy"] = "normal"  #  complete
-        #caps["pageLoadStrategy"] = "eager"  #  interactive
-        caps["pageLoadStrategy"] = "none"
-
-        # fireFoxOptions = webdriver.FirefoxOptions()
-        # fireFoxOptions.add_argument("--start-maximized")
-        # fireFoxOptions.add_argument("--disable-infobars")
-        # fireFoxOptions.set_preference("dom.webnotifications.enabled", False)
-        # driver = webdriver.Firefox(desired_capabilities=caps, firefox_options=fireFoxOptions)
-
-        chrome_options = Options()
-        chrome_options.add_argument("--kiosk")
-        chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
-
-        # "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-        #     --disable-hang-monitor
-        #     --disable-prompt-on-repost
-        #     --dom-automation
-        #     --full-memory-crash-report
-        #     --no-default-browser-check
-        #     --no-first-run
-        #     --disable-background-networking
-        #     --disable-sync
-        #     --disable-translate
-        #     --disable-web-resources
-        #     --safebrowsing-disable-auto-update
-        #     --safebrowsing-disable-download-protection
-        #     --disable-client-side-phishing-detection
-        #     --disable-component-update
-        #     --disable-default-apps
-        #     --enable-logging
-        #     --log-level=1
-        #     --ignore-certificate-errors
-        #     --no-default-browser-check
-        #     --test-type=ui
-        #     --user-data-dir="C:\Users\nik\AppData\Local\Temp\scoped_dir1972_4232"
-        #     --testing-channel=ChromeTestingInterface:1972.1
-        #     --noerrdialogs
-        #     --metrics-recording-only
-        #     --enable-logging
-        #     --disable-zero-browsers-open-for-tests
-        #     --allow-file-access
-        #     --allow-file-access-from-files about:blank
-
-
-        driver = webdriver.Chrome(desired_capabilities=caps, chrome_options=chrome_options)
-
-
-
-        self.driver = driver
-        driver.get(self.camUrl)
-        driver.implicitly_wait(2)
-        #action = ActionChains(driver)
-        #action.send_keys(Keys.ALT, Keys.TAB)
-        #time.sleep(5)
-        ActionChains(driver) \
-            .send_keys(Keys.CONTROL + Keys.COMMAND + "f") \
-            .perform()
-
-        # ActionChains(driver) \
-        #     .key_down(Keys.COMMAND) \
-        #     .click(element) \
-        #     .key_up(Keys.COMMAND) \
-        #     .perform()
-       
-        #driver.getKeyboard().pressKey(Keys.F11)
-
-        # time.sleep(10)
-        # logger.info("Close broser")
-        # driver.close()
-        # driver.quit()
-        #driver.fullscreen_window()
-
 
     def updateTime(self, displayX: int, displayY: int):
 
@@ -284,62 +142,20 @@ class HdmiDisplay:
 
 
 
-async def callBlueIris():
-
-    ymlfile = open("config.yml", 'r')
-    cfg = yaml.safe_load(ymlfile)
-    config = cfg['blueiris']
-    host = config['host']
-    username = config['username']
-    password = config['password']
-
-    async with ClientSession(raise_for_status=True) as sess:
-        blue = pyblueiris.BlueIris(sess, username, password, PROTOCOL, host, "", True)
-        #await blue.update_all_information()
-        #print(blue.attributes)
-        x = await blue.setup_session()
-        #print (x)
-        #await blue.update_all_information()
-        #print(blue.attributes)
-        await blue.update_camlist()
-        #print(blue.attributes)
-        camAttr = await blue.get_camera_details('cam24')
-        print ("#####")
-        #print (camAttr)
-        cam = pyblueiris.camera.BlueIrisCamera(blue, "cam24")
-        await cam.update_camconfig()
-        print (cam.mjpeg_url)
-
-
-        print(blue.client.blueiris_session)
-        return "{}?session={}".format(cam.mjpeg_url, blue.client.blueiris_session)
-
-        # http://172.20.0.160/mjpg/cam24/video.mjpg?session=37c828f9108a17ad5df97c213f2a6d1a
-
-
 def main():  
 
 
-    loop = asyncio.get_event_loop()
-    future = asyncio.ensure_future(callBlueIris(), loop=loop)
-    try:
-        url = loop.run_until_complete(future)
-    except KeyboardInterrupt:
-        future.cancel()
-        loop.run_until_complete(future)
-        loop.close()
-
-    logger.info("URL: %s", url)
+    # blueiris = BlueIris()
+    # blueiris.login()
+    # url = blueiris.getCamURL("cam24")
+    # logger.info("CAM URL: %s", url)
     
     display = HdmiDisplay()
-    display.startup(url)
+    display.startup()
 
     print("Existing app...")
     pygame.quit()
     exit()
-
-
-
 
 
 if __name__ == '__main__':

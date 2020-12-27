@@ -35,7 +35,7 @@ The AnyBeam projector is connected to a Dell Optiplex 3020M via HDMI via a Displ
 I did find that under complete black room conditions that the AnyBeam projector was showing a thin white line at the bottom right of the projected image.  It seemed to be under the 720th line of resolution of the display.  The easy fix was putting black electrical tape on the bottom of the lens such that it blocked the unwanted thin white line but doesn't block (much of) the bottom of the display.
 
 ## Mount
-The following images show how the AnyBeam is mounted on a gooseneck to aim the projector on the ceiling of bedroom.  The AnyBeam projector has a 1/4-20 mount so its easy to attache to various stands.
+The following images show how the AnyBeam is mounted on a gooseneck to aim the projector on the ceiling of bedroom.  The AnyBeam projector has a 1/4-20 mount so it's easy to attach to various stands.
 
 ![setup1](notes/projector_setup1.jpg)
 

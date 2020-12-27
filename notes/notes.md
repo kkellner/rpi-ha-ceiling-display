@@ -2,40 +2,22 @@
 
 # Intro
 
-The following are my notes to date regarding the AnyBeam projector.
+The following are my notes to date regarding the AnyBeam projector using a Raspberry Pi 4b. 
+
+UPDATE as of 12/17/2020, AnyBeam verified that there is an issue with the HDMI output on the Raspberry Pi 4 where it produces jittering/flickering. This is not an AnyBeam projector issue but flakey HDMI output from the RPi4b.  Hopefully a future update to the RPi4b will fix the HDMI output.
 
 # Background
 
-I have a atomic clock that projects the time on the ceiling of by bedroom so you can easily see what time it is in the middle of the night.  However I wanted additional information displayed such as outside temperature, wind speed, inside temperature, thermostat settings.  I have all this information available via [Home Assistant](https://www.home-assistant.io/) (home automation software).  The plan is to use a raspberry Pi to generate a display that will be output via HDMI and then displayed via a projector on the ceiling of the bedroom.
+The plan was to use a raspberry Pi 4b to generate a display that will be output via HDMI and then displayed via a projector on the ceiling of the bedroom.
 
-The problem is finding a small fanless projector where the "black" is truly black.  Since this is to be viewed at night, the inensity of the display was not important (low Lux was just fine).  This where the [AnyBeam Pico Mini Portable Pocket Projector](https://www.amazon.com/gp/product/B088BG59QR/) comes into the picture.  It looked perfect for my needs.  With the MEMS laser configuration, it was low power, no fan, black was black, it was small.  I was worried about having it powered on 8-12 hours per night but I wasked AnyBeam who said that it would be fine.
+I was worried about having it powered on 8-12 hours per night but I wasked AnyBeam who said that it would be fine.
 
 I puchased the AnyBeam Pico Mini Portable Pocket Projector on 11/23/2020.
 
-# Setup
-
-The following images show how the AnyBeam is mounted on a gooseneck to aim the projector on the ceiling of bedroom.
-
-
-![setup1](projector_setup1.jpg)
-
-![setup2](projector_setup2.jpg)
-
-Note: you will see some some black electrical tape on the AnyBeam projector -- There was some light bleed through where the case is connected together.  I put the tape on to block the light since my head is right next to the projector.
-
-
-# Software
-This repo contains the Python code that runs on Linux on the Rasepberry Pi. It uses the [Pygame](https://www.pygame.org/wiki/about)] library to create the framebuffer / image that is output to the HDMI interface. The display image is very simple, initialized at 1280 x 720 resolution to match AnyBeam native resolution and contains just a few lines of text. This is an example of what the display shows:
-
-![Normal Display](normal_display.png)
-
-The colon seperating the hours and minutes toggle every 1/2 second which gives an indicator that the display is updating propertly.
-
-The "Events" and "Connected" fields are just debug fields to indicate Home Assistant connection and event traffic.
 
 # Issues
 
-I have encountered the following issues while using the AnyBeam projector.
+I have encountered the following issues while using the AnyBeam projector connected to Raspberry Pi 4b
 
 
 ## Display freezes
@@ -75,10 +57,6 @@ Here is the screen you see for a few seconds:
 ![disconnect screen](disconnected_screen.jpg)
 
 
-## Buzzing sound
-
-Twice over 4 days I heard a buzzing type noise come from Anybeam (I don't think it was from the speaker).  Lasted only a few seconds.  It's a low volume buzz but since it's next to my bed in a quiet room, I noticed it
-
 ## Very faint bottom line
 
 There is a very faint white (gray?) line at the bottom of the display -- seems to be after the 720th row of the display.  After adjusting many setting in software with no fix, I just put some black electrical tape on the very bottom of the lens.  This masked off the line.  No a big deal and it was an easy workaround.
@@ -90,7 +68,7 @@ The following changes were made in an attempt to fix the issue(s)
 1. Replaced the USB power supply and cable to the AnyBeam projector.
 1. Replaced the Raspberry Pi (hardware)
 1. Changed to pygame fps from 2 to 30.
-1. I have another micro-HDMI cable on order to verify that is not the issue.
+1. Replaced the micro-HDMI cable.
 
 None of the above changes have had any effect on these issues.
 

@@ -184,6 +184,38 @@ class HdmiDisplay:
                     self.updateRain(400, 370, rainRate)
                 
                 self.updateHvac(10, 450)
+
+
+                notifications = []
+
+                if not self.getEventValueBoolean("binary_sensor.internet_up", True):
+                    valueText=self.fontValue2.render("Internet DOWN", True, self.valueColor, (0,0,0))
+                    notifications.append(valueText)
+
+                if self.getEventValueBoolean("binary_sensor.zwmimo_garage_door_large_sensor"):
+                    valueText=self.fontValue2.render("Garage door OPEN", True, self.valueColor, (0,0,0))
+                    notifications.append(valueText)
+
+                if self.getEventValueBoolean("binary_sensor.catdetect_detect_any"):
+                    valueText=self.fontValue2.render("Patio Door - Cat detect", True, self.valueColor, (0,0,0))
+                    notifications.append(valueText)
+
+                if self.getEventValueBoolean("light.garage_notify_light"):
+                    valueText=self.fontValue2.render("Mailbox openned", True, self.valueColor, (0,0,0))
+                    notifications.append(valueText)
+
+                if self.getEventValue("person.jkellner", UNKNOWN_VALUE) == "away":
+                    valueText=self.fontValue2.render("Jen is NOT at home", True, self.valueColor, (0,0,0))
+                    notifications.append(valueText)
+
+                diskUsedPercent = self.getEventValueFloat("sensor.disk_use_percent") 
+                if diskUsedPercent > 80:
+                    valueText=self.fontValue2.render("HA Disk Usage is {:.0f}%".format(diskUsedPercent), True, self.valueColor, (0,0,0))
+                    notifications.append(valueText)
+
+
+                self.showNotifications(700, 225, notifications)
+
             
             debugLineStartX = 590
             debugLineOffset = 30
@@ -240,6 +272,19 @@ class HdmiDisplay:
                 logger.info("Running on OSX? - can't turn on/off HDMI")
 
              
+    def showNotifications(self, displayX: int, displayY: int, notifications):
+
+        
+        offsetHight = 0
+
+        for noticeNum, notice in enumerate(notifications, start=1):
+            valueText = notice
+            valueText_width = valueText.get_width()
+            valueText_height = valueText.get_height()
+            self.screen.blit(valueText, (displayX, displayY+offsetHight))
+            offsetHight = offsetHight + valueText_height 
+
+
 
 
     def updateDebug(self, displayX: int, displayY: int, label:str, debugText: str):

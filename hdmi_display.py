@@ -167,33 +167,39 @@ class HdmiDisplay:
             windGust = self.getEventValueFloat('sensor.wind_gust')
             rainRate = self.getEventValueFloat('sensor.daily_rain_rate')
 
+
+
             self.updateTime(10,60)
 
             if haEvents.statesSynced:
           
-                self.updateInsideTemperature(10, 250, insideTemperature)
+                self.updateInsideTemperature(10, 225, insideTemperature)
 
-                self.updateOutsideTemperature(10, 350, outsideTemperature)
-                self.updateWind(300, 350, windSpeed, windGust)
+                self.updateOutsideTemperature(10, 300, outsideTemperature)
+                self.updateForcastTemperature(300, 300)
+            
+                self.updateWind(10+150, 370, windSpeed, windGust)
 
                 if rainRate > 0:
-                    self.updateRain(530, 350, rainRate)
+                    self.updateRain(400, 370, rainRate)
                 
                 self.updateHvac(10, 450)
-                
+            
+            debugLineStartX = 590
+            debugLineOffset = 30
             if haEvents.connected:
-                self.updateDebug(10, 530, "Events", "{:d}".format(haEvents.eventCount))
-                #self.updateDebug(10, 560, "Connected", "{:s}".format(str(haEvents.connected)))
-                self.updateDebug(10, 560, "Connect Attempts", "{:s}".format(str(haEvents.connectAttemptCount)))
-                self.updateDebug(10, 590, "Successsful Connects", "{:s}".format(str(haEvents.connectSuccessCount)))
-                self.updateDebug(10, 620, "Inet up", str(self.getEventValueBoolean("binary_sensor.internet_up")))
+                self.updateDebug(10, debugLineStartX + (0* debugLineOffset), "Events", "{:d}".format(haEvents.eventCount))
+                #self.updateDebug(10, (1* debugLineOffset), "Connected", "{:s}".format(str(haEvents.connected)))
+                self.updateDebug(10, debugLineStartX + (1* debugLineOffset), "Connect Attempts", "{:s}".format(str(haEvents.connectAttemptCount)))
+                self.updateDebug(10, debugLineStartX + (2* debugLineOffset), "Successsful Connects", "{:s}".format(str(haEvents.connectSuccessCount)))
+                self.updateDebug(10, debugLineStartX + (3* debugLineOffset), "Inet up", str(self.getEventValueBoolean("binary_sensor.internet_up")))
 
             else:
                 disconnectedDuration = time.time() - haEvents.lastDisconnectTime
                 formattedDuration = formatDuration(disconnectedDuration)
-                self.updateDebug(10, 530, "Disconnected", formattedDuration)
-                self.updateDebug(10, 560, "Connect Attempts", "{:s}".format(str(haEvents.connectAttemptCount)))
-                self.updateDebug(10, 590, "Successsful Connects", "{:s}".format(str(haEvents.connectSuccessCount)))
+                self.updateDebug(10, debugLineStartX + (0* debugLineOffset), "Disconnected", formattedDuration)
+                self.updateDebug(10, debugLineStartX + (1* debugLineOffset), "Connect Attempts", "{:s}".format(str(haEvents.connectAttemptCount)))
+                self.updateDebug(10, debugLineStartX + (2* debugLineOffset), "Successsful Connects", "{:s}".format(str(haEvents.connectSuccessCount)))
 
             pygame.display.update()
 
@@ -327,6 +333,34 @@ class HdmiDisplay:
         valueText_height = valueText.get_height()
         self.screen.blit(valueText, (displayX + displayXValueOffset, displayY))
 
+    def updateForcastTemperature(self, displayX: int, displayY: int):
+       
+        epochNow = time.time()
+        now = time.localtime(epochNow)
+        if now.tm_hour < 15:
+            forecastHigh = self.getEventValueFloat('sensor.weather_today_high_temperature')
+            forecastLow = self.getEventValueFloat('sensor.weather_today_low_temperature')
+            forecastToday = True
+        else:
+            forecastHigh = self.getEventValueFloat('sensor.weather_tomorrow_high_temperature')
+            forecastLow = self.getEventValueFloat('sensor.weather_tomorrow_low_temperature')
+            forecastToday = False
+
+        forecastDay = "Today" if forecastToday else "Tomorrow"
+
+        # Temperature Outside
+        label = "{}:".format(forecastDay)
+        labelText=self.fontValue2.render(label, True, self.labelColor, (0,0,0))
+        self.screen.blit(labelText, (displayX,displayY))
+        displayXValueOffset = labelText.get_width() + 5
+
+        formattedValue = "{:.0f}°/ {:.0f}°".format(forecastHigh,forecastLow)
+        valueText=self.fontValue2.render(formattedValue, True, self.valueColor, (0,0,0))
+        valueText_width = valueText.get_width()
+        valueText_height = valueText.get_height()
+        self.screen.blit(valueText, (displayX + displayXValueOffset, displayY))
+
+
     def updateInsideTemperature(self, displayX: int, displayY: int, temperature: float):
         # Temperature Inside
         displayXValueOffset = 150
@@ -363,12 +397,12 @@ class HdmiDisplay:
     def updateRain(self, displayX: int, displayY: int, rainRate: float):
         # Rain
         label = "Rain:"
-        labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
+        labelText=self.fontValue2.render(label, True, self.labelColor, (0,0,0))
         labelText_width = labelText.get_width()
         self.screen.blit(labelText, (displayX,displayY))
 
         formattedValue = "{:.2f}".format(rainRate)
-        valueText=self.fontValue.render(formattedValue, True, self.valueColor, (0,0,0))
+        valueText=self.fontValue2.render(formattedValue, True, self.valueColor, (0,0,0))
         valueText_width = valueText.get_width()
         valueText_height = valueText.get_height()
         self.screen.blit(valueText, (displayX + labelText_width+8, displayY))
@@ -376,7 +410,7 @@ class HdmiDisplay:
         suffixText=self.fontSmall.render("in", True, self.valueColor, (0,0,0))
         suffixText_width = suffixText.get_width()
         suffixText_height = suffixText.get_height()
-        self.screen.blit(suffixText, (displayX+valueText_width+labelText_width+10, displayY+valueText_height-suffixText_height-10))
+        self.screen.blit(suffixText, (displayX+valueText_width+labelText_width+10, displayY+valueText_height-suffixText_height-5))
 
 
 

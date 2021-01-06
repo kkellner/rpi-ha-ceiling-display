@@ -213,6 +213,17 @@ class HdmiDisplay:
                     valueText=self.fontValue2.render("HA Disk Usage is {:.0f}%".format(diskUsedPercent), True, self.valueColor, (0,0,0))
                     notifications.append(valueText)
 
+                batteryLevel = self.getEventValueFloat("sensor.kurt_pixel_battery_level") 
+                if batteryLevel < 40:
+                    valueText=self.fontValue2.render("Kurt's phone batt at {:.0f}%".format(batteryLevel), True, self.valueColor, (0,0,0))
+                    notifications.append(valueText)
+
+                batteryLevel = self.getEventValueFloat("sensor.jen_pixel_battery_level") 
+                if batteryLevel < 40:
+                    valueText=self.fontValue2.render("Jen's phone batt at {:.0f}%".format(batteryLevel), True, self.valueColor, (0,0,0))
+                    notifications.append(valueText)
+
+
 
                 self.showNotifications(700, 225, notifications)
 

@@ -34,6 +34,7 @@ then
   echo "Status after restart of WIFI:"
   nmcli connection show --active 
   nmcli general status
+  echo "Done trying to reconnect at: $(date)"
 else
   echo "WIFI is OK at: $(date)"
 fi

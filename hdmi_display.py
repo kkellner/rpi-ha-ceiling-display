@@ -200,6 +200,18 @@ class HdmiDisplay:
                     valueText=self.fontValue2.render("Patio Door - Cat detect", True, self.valueColor, (0,0,0))
                     notifications.append(valueText)
 
+                if self.getEventValueBoolean("binary_sensor.zbsense_202_patio_door_contact"):
+                    valueText=self.fontValue2.render("Patio Door OPEN", True, self.valueColor, (0,0,0))
+                    notifications.append(valueText)
+
+                if self.getEventValueBoolean("binary_sensor.zwsense_205_fence_gate_sensor"):
+                    valueText=self.fontValue2.render("Fence gate OPEN", True, self.valueColor, (0,0,0))
+                    notifications.append(valueText)
+
+                if self.getEventValueBoolean("binary_sensor.zwsensor_204_front_door_sensor"):
+                    valueText=self.fontValue2.render("Front door OPEN", True, self.valueColor, (0,0,0))
+                    notifications.append(valueText)
+
                 if self.getEventValueBoolean("light.garage_notify_light"):
                     valueText=self.fontValue2.render("Mailbox openned", True, self.valueColor, (0,0,0))
                     notifications.append(valueText)

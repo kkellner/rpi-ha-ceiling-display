@@ -213,7 +213,7 @@ class HdmiDisplay:
                     notifications.append(valueText)
 
                 if self.getEventValueBoolean("light.garage_notify_light"):
-                    valueText=self.fontValue2.render("Mailbox openned", True, self.valueColor, (0,0,0))
+                    valueText=self.fontValue2.render("Mailbox opened", True, self.valueColor, (0,0,0))
                     notifications.append(valueText)
 
                 if self.getEventValue("person.jkellner", UNKNOWN_VALUE) == "not_home":

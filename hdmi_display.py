@@ -469,7 +469,7 @@ class HdmiDisplay:
         labelText_width = labelText.get_width()
         self.screen.blit(labelText, (displayX,displayY))
 
-        formattedValue = "{:.2f}".format(rainRate)
+        formattedValue = "{:.3f}".format(rainRate)
         valueText=self.fontValue2.render(formattedValue, True, self.valueColor, (0,0,0))
         valueText_width = valueText.get_width()
         valueText_height = valueText.get_height()

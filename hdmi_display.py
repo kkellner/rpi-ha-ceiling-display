@@ -117,7 +117,11 @@ class HdmiDisplay:
         return value
 
     def getEventAttributeInt(self, eventId, attributeName, defaultValue = -1):
-        return int(self.getEventAttribute(eventId, attributeName, defaultValue))
+        try:
+            strValue = self.getEventAttribute(eventId, attributeName, defaultValue)
+            return int(defaultValue if strValue is None else strValue)
+        except ValueError:
+            return defaultValue
 
     def getEventValue(self, eventId, defaultValue):
         events = self.ceiling_display.ha_events.events

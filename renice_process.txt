@@ -1,0 +1,19 @@
+# This is the process to change the priority on
+/usr/lib/xorg/Xorg vt2 -displayfd 3 -auth /run/user/1000/gdm/Xauthority -background none -noreset -keeptty -verbose 3
+
+# This will give the pid
+pgrep Xorg
+
+# This will set the process to realtime
+sudo chrt -r -p 21 `pgrep Xorg`
+sudo chrt -p `pgrep Xorg`
+
+
+Where the above process has pid 2024
+
+sudo renice -n  -22  -p 2024
+
+# Set process to realtime priory of 20
+sudo chrt -r -p 20 2024
+
+

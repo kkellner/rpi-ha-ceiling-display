@@ -180,6 +180,7 @@ class HdmiDisplay:
             if haEvents.statesSynced:
           
                 self.updateInsideTemperature(10, 225, insideTemperature)
+                self.updateInsideHumidity(10, 225, insideHumidity)
 
                 self.updateOutsideTemperature(10, 300, outsideTemperature)
                 self.updateForcastTemperature(300, 300)
@@ -443,7 +444,7 @@ class HdmiDisplay:
         labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
         self.screen.blit(labelText, (displayX,displayY))
 
-        formattedValue = "{:.0f}°".format(temperature)
+        formattedValue = "{:.1f}°".format(temperature)
         valueText=self.fontValue.render(formattedValue, True, self.valueColor, (0,0,0))
         valueText_width = valueText.get_width()
         valueText_height = valueText.get_height()
@@ -451,7 +452,7 @@ class HdmiDisplay:
 
     def updateInsideHumidity(self, displayX: int, displayY: int, humidity: float):
         # Humidity Inside
-        displayXValueOffset = 300
+        displayXValueOffset = 330
         label = ""
         labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
         self.screen.blit(labelText, (displayX,displayY))

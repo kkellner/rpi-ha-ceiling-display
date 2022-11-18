@@ -8,6 +8,8 @@ pgrep Xorg
 sudo chrt -r -p 21 `pgrep Xorg`
 sudo chrt -p `pgrep Xorg`
 
+sudo chrt -r -p 21 `pgrep gdm-x-session`
+
 
 Where the above process has pid 2024
 

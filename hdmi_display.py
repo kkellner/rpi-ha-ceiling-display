@@ -271,7 +271,8 @@ class HdmiDisplay:
         self.valueColor = adjust_color_lightness(colorBaseRed, 1-((100-brightnessPercent)/100))
         labelBrightness = (brightnessPercent / 100) ** 0.5 * .5
         self.labelColor = darken_color(self.valueColor, labelBrightness)
-        WARN_COLOR=(161, 159, 47)
+        #WARN_COLOR=(161, 159, 47)
+        WARN_COLOR=(61, 60, 18)
         warnBrightness = brightnessPercent
         self.warnColor = adjust_color_lightness(WARN_COLOR, 1-((100-warnBrightness)/100))
 

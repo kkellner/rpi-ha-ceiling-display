@@ -1,0 +1,7 @@
+
+# Ensure the firewall allows traffic to internet then run as root:
+
+update-leap -L /usr/share/zoneinfo/leap-seconds.list
+
+# Then restar ntpd
+service ntp restart 

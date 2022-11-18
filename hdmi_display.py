@@ -166,7 +166,9 @@ class HdmiDisplay:
             events = haEvents.events
 
             outsideTemperature = self.getEventValueFloat('sensor.outdoor_temperature')
-            insideTemperature = self.getEventValueFloat('sensor.zbtemp301_bedroom_temperature')
+            #insideTemperature = self.getEventValueFloat('sensor.zbtemp301_bedroom_temperature')
+            insideTemperature = self.getEventValueFloat('sensor.bedroom_temperature')
+            insideHumidity = self.getEventValueFloat('sensor.bedroom_humidity')
             windSpeed = self.getEventValueFloat('sensor.wind_speed')
             windGust = self.getEventValueFloat('sensor.wind_gust')
             rainRate = self.getEventValueFloat('sensor.daily_rain_rate')
@@ -442,6 +444,19 @@ class HdmiDisplay:
         self.screen.blit(labelText, (displayX,displayY))
 
         formattedValue = "{:.0f}°".format(temperature)
+        valueText=self.fontValue.render(formattedValue, True, self.valueColor, (0,0,0))
+        valueText_width = valueText.get_width()
+        valueText_height = valueText.get_height()
+        self.screen.blit(valueText, (displayX + displayXValueOffset, displayY))
+
+    def updateInsideHumidity(self, displayX: int, displayY: int, humidity: float):
+        # Humidity Inside
+        displayXValueOffset = 300
+        label = ""
+        labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
+        self.screen.blit(labelText, (displayX,displayY))
+
+        formattedValue = "{:.0f}%".format(humidity)
         valueText=self.fontValue.render(formattedValue, True, self.valueColor, (0,0,0))
         valueText_width = valueText.get_width()
         valueText_height = valueText.get_height()

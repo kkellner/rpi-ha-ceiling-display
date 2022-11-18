@@ -1,5 +1,6 @@
 # rpi-ha-ceiling-display
 
+x
 This repo contains Python code to display select Home Assistant data on bedroom ceiling.  It uses the [Pygame](https://www.pygame.org/wiki/about)] library to create the framebuffer / image that is output to the HDMI interface. The display image is very simple, initialized at 1280 x 720 resolution to match AnyBeam native resolution and contains just a few lines of text. 
 
 The colon seperating the hours and minutes toggle every 1/2 second which gives an indicator that the display is updating propertly.

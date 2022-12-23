@@ -403,7 +403,11 @@ class HdmiDisplay:
         labelText=self.fontValue.render(label, True, self.labelColor, (0,0,0))
         self.screen.blit(labelText, (displayX,displayY))
 
-        formattedValue = "{:.0f}°".format(temperature)
+        if temperature < 10:
+            formattedValue = "{:.1f}°".format(temperature)
+        else:
+            formattedValue = "{:.0f}°".format(temperature)
+
         valueText=self.fontValue.render(formattedValue, True, self.valueColor, (0,0,0))
         valueText_width = valueText.get_width()
         valueText_height = valueText.get_height()

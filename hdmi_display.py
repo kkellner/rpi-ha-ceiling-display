@@ -336,12 +336,22 @@ class HdmiDisplay:
     def updateHvac(self, displayX: int, displayY: int):
         # HVAC status
         # Example: HVAC 65 current 64: heating
-        hvacAction = self.getEventAttribute("climate.thermostat", "hvac_action")
-        #fanAction = self.getEventAttribute("climate.thermostat", "fan_action")
-        set_temperature = self.getEventAttributeInt("climate.thermostat", "temperature")
-        current_temperature = self.getEventAttributeInt("climate.thermostat", "current_temperature")
 
-        formattedValue = "{:d}° {:s}: {:d}°".format(set_temperature, hvacAction, current_temperature)
+        hvacState = self.getEventValue("climate.thermostat", "Error")
+        current_temperature = self.getEventAttributeInt("climate.thermostat", "current_temperature")
+        set_temperature = self.getEventAttributeInt("climate.thermostat", "temperature")
+        hvacAction = self.getEventAttribute("climate.thermostat", "hvac_action")
+        fanMode = self.getEventAttribute("climate.thermostat", "fan_mode")
+
+        if hvacState != "off":
+            hvacStatus = "{:d}° {:s}/{:s}".format(set_temperature, hvacState, hvacAction)
+        elif fanMode != "auto":
+            hvacStatus = "hvac off/fan {:s}".format(fanMode)
+        else:
+            hvacStatus = "hvac off"
+
+        
+        formattedValue = "{:s}: {:d}°".format(hvacStatus, current_temperature)
      
         label = "HVAC:"
         labelText=self.fontLabel2.render(label, True, self.labelColor, (0,0,0))

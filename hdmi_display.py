@@ -195,54 +195,68 @@ class HdmiDisplay:
 
                 notifications = []
 
-                if not self.getEventValueBoolean("binary_sensor.internet_up", True):
-                    valueText=self.fontValue2.render("Internet DOWN", True, self.valueColor, (0,0,0))
-                    notifications.append(valueText)
+                # if not self.getEventValueBoolean("binary_sensor.internet_up", True):
+                #     valueText=self.fontValue2.render("Internet DOWN", True, self.valueColor, (0,0,0))
+                #     notifications.append(valueText)
 
-                if self.getEventValueBoolean("binary_sensor.zwmimo_garage_door_large_sensor"):
-                    valueText=self.fontValue2.render("Garage door OPEN", True, self.valueColor, (0,0,0))
-                    notifications.append(valueText)
+                # if self.getEventValueBoolean("binary_sensor.zwmimo_garage_door_large_sensor"):
+                #     valueText=self.fontValue2.render("Garage door OPEN", True, self.valueColor, (0,0,0))
+                #     notifications.append(valueText)
 
-                if self.getEventValueBoolean("binary_sensor.catdetect_detect_any"):
-                    valueText=self.fontValue2.render("Patio Door - Cat detect", True, self.valueColor, (0,0,0))
-                    notifications.append(valueText)
+                # if self.getEventValueBoolean("binary_sensor.catdetect_detect_any"):
+                #     valueText=self.fontValue2.render("Patio Door - Cat detect", True, self.valueColor, (0,0,0))
+                #     notifications.append(valueText)
 
-                if self.getEventValueBoolean("binary_sensor.zbsense_202_patio_door_contact"):
-                    valueText=self.fontValue2.render("Patio Door OPEN", True, self.valueColor, (0,0,0))
-                    notifications.append(valueText)
+                # if self.getEventValueBoolean("binary_sensor.zbsense_202_patio_door_contact"):
+                #     valueText=self.fontValue2.render("Patio Door OPEN", True, self.valueColor, (0,0,0))
+                #     notifications.append(valueText)
 
-                if self.getEventValueBoolean("binary_sensor.zwsense_205_fence_gate_sensor"):
-                    valueText=self.fontValue2.render("Fence gate OPEN", True, self.valueColor, (0,0,0))
-                    notifications.append(valueText)
+                # if self.getEventValueBoolean("binary_sensor.zwsense_205_fence_gate_sensor"):
+                #     valueText=self.fontValue2.render("Fence gate OPEN", True, self.valueColor, (0,0,0))
+                #     notifications.append(valueText)
 
-                if self.getEventValueBoolean("binary_sensor.zwsensor_204_front_door_sensor"):
-                    valueText=self.fontValue2.render("Front door OPEN", True, self.valueColor, (0,0,0))
-                    notifications.append(valueText)
+                # if self.getEventValueBoolean("binary_sensor.zwsensor_204_front_door_sensor"):
+                #     valueText=self.fontValue2.render("Front door OPEN", True, self.valueColor, (0,0,0))
+                #     notifications.append(valueText)
 
-                if self.getEventValueBoolean("light.garage_notify_light"):
-                    valueText=self.fontValue2.render("Mailbox opened", True, self.valueColor, (0,0,0))
-                    notifications.append(valueText)
+                # if self.getEventValueBoolean("light.garage_notify_light"):
+                #     valueText=self.fontValue2.render("Mailbox opened", True, self.valueColor, (0,0,0))
+                #     notifications.append(valueText)
 
-                if self.getEventValue("person.jkellner", UNKNOWN_VALUE) == "not_home":
-                    valueText=self.fontValue2.render("Jen is NOT at home", True, self.valueColor, (0,0,0))
-                    notifications.append(valueText)
+                # if self.getEventValue("person.jkellner", UNKNOWN_VALUE) == "not_home":
+                #     valueText=self.fontValue2.render("Jen is NOT at home", True, self.valueColor, (0,0,0))
+                #     notifications.append(valueText)
 
-                diskUsedPercent = self.getEventValueFloat("sensor.disk_use_percent") 
-                if diskUsedPercent > 80:
-                    valueText=self.fontValue2.render("HA Disk Usage is {:.0f}%".format(diskUsedPercent), True, self.valueColor, (0,0,0))
-                    notifications.append(valueText)
+                # diskUsedPercent = self.getEventValueFloat("sensor.disk_use_percent")
+                # if diskUsedPercent > 80:
+                #     valueText=self.fontValue2.render("HA Disk Usage is {:.0f}%".format(diskUsedPercent), True, self.valueColor, (0,0,0))
+                #     notifications.append(valueText)
 
-                batteryLevel = self.getEventValueFloat("sensor.kurt_pixel_battery_level") 
-                if batteryLevel < 40:
-                    valueText=self.fontValue2.render("Kurt's phone batt at {:.0f}%".format(batteryLevel), True, self.valueColor, (0,0,0))
-                    notifications.append(valueText)
+                # batteryLevel = self.getEventValueFloat("sensor.kurt_pixel_battery_level")
+                # if batteryLevel < 40:
+                #     valueText=self.fontValue2.render("Kurt's phone batt at {:.0f}%".format(batteryLevel), True, self.valueColor, (0,0,0))
+                #     notifications.append(valueText)
 
-                batteryLevel = self.getEventValueFloat("sensor.jen_pixel_battery_level") 
-                if batteryLevel < 40:
-                    valueText=self.fontValue2.render("Jen's phone batt at {:.0f}%".format(batteryLevel), True, self.valueColor, (0,0,0))
-                    notifications.append(valueText)
+                # batteryLevel = self.getEventValueFloat("sensor.jen_pixel_battery_level")
+                # if batteryLevel < 40:
+                #     valueText=self.fontValue2.render("Jen's phone batt at {:.0f}%".format(batteryLevel), True, self.valueColor, (0,0,0))
+                #     notifications.append(valueText)
 
 
+                warn_events = [key for key in events.keys() if key.startswith("sensor.notice_warn")]
+                for noticeEventId in warn_events:
+                    noticeText = self.getEventValue(noticeEventId, "")
+                    if noticeText:
+                        valueText=self.fontValue2.render(noticeText, True, self.valueColor, (25,25,25))
+                        notifications.append(valueText)
+
+
+                info_events = [key for key in events.keys() if key.startswith("sensor.notice_info")]
+                for noticeEventId in info_events:
+                    noticeText = self.getEventValue(noticeEventId, "")
+                    if noticeText:
+                        valueText=self.fontValue2.render(noticeText, True, self.valueColor, (0,0,0))
+                        notifications.append(valueText)
 
                 self.showNotifications(700, 225, notifications)
 
